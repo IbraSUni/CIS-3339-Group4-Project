@@ -62,7 +62,7 @@
               <span class="text-gray-700">Description</span>
               <textarea
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                rows="2"></textarea>
+                rows="2" v-model="event.description"></textarea>
             </label>
           </div>
         </div>
@@ -144,7 +144,7 @@
         <div class="mt-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10">
           <div></div>
           <div class="flex justify-between mr-20">
-            <button class="bg-red-700 text-white rounded" type="submit">
+            <button class="bg-red-700 text-white rounded disabled:opacity-50" type="submit" :disabled="submitting">
               Add New Event
             </button>
           </div>
@@ -154,98 +154,102 @@
   </main>
 </template>
 
-<script>
-// import vuelidate validations
-import useVuelidate from '@vuelidate/core'
-import { required } from '@vuelidate/validators'
-import { getServices, createEvent } from '../api/api'
+<script setup>
+// ---------------------------------------------------------------------------
+// Composition API migration (task F1)
+//   Before: data() { event, activeServices, openDescriptions },
+//           setup() { v$ }, validations() with two inline custom validators,
+//           mounted() loading services, methods { handleSubmitForm }.
+//   After:  <script setup>
+//   - data().event           -> reactive()
+//   - activeServices         -> ref([])
+//   - openDescriptions       -> removed (declared but never used)
+//   - validations()          -> `rules`, passed to useVuelidate(rules, { event })
+//   - mounted()              -> onMounted(loadActiveServices)
+//   - this.$router           -> useRouter()
+// Fixed during the migration: the Description textarea had no v-model, so
+// anything typed into it was never saved. It is now bound to event.description.
+// The route is editor-only (meta.requiresEditor).
+// ---------------------------------------------------------------------------
+import { reactive, ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
+import useVuelidate from '@vuelidate/core'
+import { required, helpers } from '@vuelidate/validators'
+import { getServices, createEvent, messageOf } from '../api/api'
 
-//Notifications
+const router = useRouter()
 const toast = useToast()
 
-export default {
-  data() {
-    return {
-      // event variable to hold new event information
-      event: {
-        name: null,
-        description: null,
-        date: null,
-        services: [],
-        address: {
-          line1: null,
-          line2: null,
-          city: null,
-          county: null,
-          zip: null
-        },
-        attendees: [],
-      },
-      //variable to assign service IDs to event (user clicks checkboxes to add services to event)
-      activeServices: [],
-      // variable that determines which services in the List of Services checkboxes have expanded details
-      openDescriptions: [],
-    }
+// was data().event
+const event = reactive({
+  name: null,
+  description: null,
+  date: null,
+  services: [],
+  address: {
+    line1: null,
+    line2: null,
+    city: null,
+    county: null,
+    zip: null
   },
-  setup() {
-    // Register Vuelidate
-    const v$ = useVuelidate();
-    return { v$ };
-  },
-  validations() {
-    // validations
-    const validDate = (value) => {
-      const date = new Date(value)
-      return !isNaN(date)
-    }
+  attendees: []
+})
 
-    // prevents form submission if new event has a date before the current date
-    const notBeforeToday = (value) => {
-      const today = new Date()
-      return value >= today.toISOString().split('T')[0]
-    }
+// was data().activeServices: only Active services can be offered at an event
+const activeServices = ref([])
 
-    return {
-      event: {
-        name: { required },
-        date: {
-          required,
-          validDate,
-          notBeforeToday
-        },
-      }
-    }
-  },
-  async mounted() {
-    // when component is mounted, data is loaded
-    try {
-        const response = await getServices();
-        this.activeServices = response.filter(item => item.status === "Active")
-      } catch (error) {
-        toast.error(error)
-      }
-  },
-  methods: {
-    // method called when user tries to create new event
-    async handleSubmitForm() {
-      // Trigger validation
-      this.v$.$validate();
+// ---- validation (was validations()) ----
+const validDate = (value) => !helpers.req(value) || !Number.isNaN(new Date(value).getTime())
 
-      if (this.v$.$error) {
-        toast.error('Please fix input field errors')
-        // Form is invalid, do not proceed
-        return;
-      }
+// A new event cannot be scheduled in the past. The comparison is on the
+// YYYY-MM-DD string from <input type="date">, in the user's local time zone.
+const notBeforeToday = (value) => {
+  if (!helpers.req(value)) return true
+  const now = new Date()
+  const today = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().split('T')[0]
+  return value >= today
+}
 
-      try {
-        const response = await createEvent(this.event);
-        this.$router.push('/findevents')
-        toast.success(response)
-      } catch (error) {
-        toast.error('error creating new event:', error)
-      }
-    },
-  },
+const rules = {
+  event: {
+    name: { required },
+    date: { required, validDate, notBeforeToday }
+  }
+}
+const v$ = useVuelidate(rules, { event })
+
+const submitting = ref(false)
+
+// was mounted()
+async function loadActiveServices() {
+  try {
+    const services = await getServices()
+    activeServices.value = services.filter((service) => service.status === 'Active')
+  } catch (err) {
+    toast.error(`Could not load services: ${err.message}`)
+  }
+}
+onMounted(loadActiveServices)
+
+// was methods.handleSubmitForm()
+async function handleSubmitForm() {
+  const isValid = await v$.value.$validate()
+  if (!isValid) {
+    toast.error('Please fix the highlighted fields')
+    return
+  }
+
+  submitting.value = true
+  try {
+    const response = await createEvent(event)
+    toast.success(messageOf(response, 'Event created'))
+    router.push({ name: 'findevents' })
+  } catch (err) {
+    toast.error(err.message)
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
