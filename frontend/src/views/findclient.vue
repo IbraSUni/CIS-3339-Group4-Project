@@ -10,10 +10,9 @@
     <div class="px-10 pt-20">
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10">
         <!--Search Client By selection-->
-        <h2 class="text-2xl font-bold">Search Client By</h2>
-        <!-- Displays Client Name search field -->
+        <h2 class="text-2xl font-bold" id="client-search-by">Search Client By</h2>
         <div class="flex flex-col">
-          <select
+          <select aria-labelledby="client-search-by"
             class="rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
             v-model="searchBy">
             <option value="Client Name">Client Name</option>
@@ -23,25 +22,30 @@
         <!--Input box for searching by Client First Name-->
         <div class="flex flex-col" v-if="searchBy === 'Client Name'">
           <label class="block">
+            <span class="sr-only">First name</span>
             <input type="text"
               class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-              v-model="firstName" v-on:keyup.enter="handleSubmitForm" placeholder="Enter first name" />
+              v-model.trim="firstName" @keyup.enter="handleSubmitForm" placeholder="Enter first name" />
           </label>
         </div>
         <!--Input box for searching by Client Last Name-->
         <div class="flex flex-col" v-if="searchBy === 'Client Name'">
           <label class="block">
+            <span class="sr-only">Last name</span>
             <input type="text"
               class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-              v-model="lastName" v-on:keyup.enter="handleSubmitForm" placeholder="Enter last name" />
+              v-model.trim="lastName" @keyup.enter="handleSubmitForm" placeholder="Enter last name" />
           </label>
         </div>
         <!-- Displays Client Number search field -->
         <div class="flex flex-col" v-if="searchBy === 'Client Number'">
-          <input
-            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-            type="text" v-model="phoneNumber" v-on:keyup.enter="handleSubmitForm"
-            placeholder="Enter Client Phone Number" />
+          <label class="block">
+            <span class="sr-only">Phone number</span>
+            <input
+              class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              type="text" v-model.trim="phoneNumber" @keyup.enter="handleSubmitForm"
+              placeholder="Enter Client Phone Number" />
+          </label>
         </div>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10">
@@ -49,11 +53,11 @@
         <div></div>
         <!--Clear Search button-->
         <div class="mt-5 grid-cols-2">
-          <button class="mr-10 border border-red-700 bg-white text-red-700 rounded" @click="loadData" type="submit">
+          <button class="mr-10 border border-red-700 bg-white text-red-700 rounded" @click="clearSearch" type="button">
             Clear Search
           </button>
           <!--Search Client button-->
-          <button class="bg-red-700 text-white rounded" @click="handleSubmitForm" type="submit">
+          <button class="bg-red-700 text-white rounded" @click="handleSubmitForm" type="button">
             Search Client
           </button>
         </div>
@@ -65,111 +69,110 @@
       <div class="ml-10">
         <h2 class="text-2xl font-bold">List of Clients</h2>
         <h3 class="italic">Click table row to view client details</h3>
+        <p v-if="activeQuery" class="mt-2 text-sm text-gray-600">Showing search results. Use Clear Search to see all clients.</p>
       </div>
-      <!--Table showing list of Clients-->
-      <div class="flex flex-col col-span-2">
-        <table class="min-w-full shadow-md rounded">
-          <thead class="bg-gray-50 text-xl">
-            <tr>
-              <th class="p-4 text-left">Name</th>
-              <th class="p-4 text-left">Phone number</th>
-              <th class="p-4 text-left">City</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-300">
-            <tr @click="$router.push({ name: 'clientdetails', params: { id: client._id } })" v-for="client in clients"
-              :key="client._id" class="cursor-pointer" :class="{ 'hoverRow': hoverId === client._id }"
-              @mouseenter="hoverId = client._id" @mouseleave="hoverId = null">
-              <td class="p-2 text-left">
-                {{ client.firstName + ' ' + client.lastName }}
-              </td>
-              <td class="p-2 text-left">
-                {{ client.phoneNumber.primary }}
-              </td>
-              <td class="p-2 text-left">{{ client.address.city }}</td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="flex flex-col col-span-2 mb-10">
+        <!-- Loading state -->
+        <div v-if="loading" class="p-10 text-center border rounded bg-gray-50" role="status">
+          <p class="text-xl font-bold text-gray-500 animate-pulse">Loading clients...</p>
+        </div>
+
+        <!-- Error state with retry -->
+        <div v-else-if="error" class="p-6 text-center border border-red-200 rounded bg-red-50" role="alert">
+          <p class="text-lg font-bold text-red-900">Could not load clients</p>
+          <p class="text-red-800 mt-1">{{ error }}</p>
+          <button class="mt-4 bg-red-700 text-white rounded" @click="execute()">Retry</button>
+        </div>
+
+        <!-- Data (DataTable shows its own "No results" row when empty) -->
+        <DataTable v-else :columns="columns" :rows="clients" :empty-text="emptyText" @row-click="openClient" />
       </div>
     </div>
   </main>
 </template>
 
-<script>
+<script setup>
+// ---------------------------------------------------------------------------
+// Composition API migration (task F1), useApi (task F2), DataTable (task F3)
+//   Before: data() { clients, searchBy, firstName, lastName, phoneNumber,
+//           hoverId }, mounted() -> loadData(), methods { loadData,
+//           handleSubmitForm }, and a hand-written <table>.
+//   After:
+//   - search fields       -> ref('')
+//   - clients/loading/error -> one useApi() call. The call reads activeQuery,
+//     so execute() re-runs whatever the user last asked for: the full list,
+//     or the last search. The Retry button simply calls execute() again.
+//   - mounted()           -> onMounted(execute)
+//   - $router.push(...)   -> useRouter().push(...)
+//   - hoverId + <table>   -> <DataTable> (sorting, paging, empty row built in)
+//   - every `toast.error(error)` that showed [object Object] is gone; errors
+//     are shown inline from useApi's error string.
+// ---------------------------------------------------------------------------
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import DataTable from '../components/DataTable.vue'
 import { getClients, searchClients } from '../api/api'
-import { useToast } from 'vue-toastification'
+import { useApi } from '../composables/useApi'
 
-//Notifications
-const toast = useToast()
+const router = useRouter()
 
-export default {
-  data() {
-    return {
-      //variable to store all clients and their information for the organization
-      clients: null,
-      // Parameters for search to occur
-      searchBy: '',
-      firstName: '',
-      lastName: '',
-      phoneNumber: '',
-      // variable stores the ID of the row that the mouse is currently hovering over (to highlight the row red)
-      hoverId: null,
-    }
-  },
-  mounted() {
-    // when component is mounted, load the data -
-    this.loadData()
-  },
-  methods: {
-    // method called when component is mounted
-    async loadData() {
-      // Resets all the variables
-      this.searchBy = ''
-      this.firstName = ''
-      this.lastName = ''
-      this.phoneNumber = ''
+// was data(): search parameters
+const searchBy = ref('')
+const firstName = ref('')
+const lastName = ref('')
+const phoneNumber = ref('')
 
-      // get list of clients
-      try {
-        const response = await getClients();
-        this.clients = response;
-      } catch (error) {
-        toast.error(error)
-      }
-    },
-    // method called when user searches for clients
-    async handleSubmitForm() {
-      // if user searched by client name
-      if (this.searchBy === 'Client Name') {
-        if (this.firstName || this.lastName) {
-          try {
-            const query = {
-              searchBy: 'name',
-              firstName: this.firstName,
-              lastName: this.lastName,
-            }
-            const response = await searchClients(query)
-            this.clients = response;
-          } catch (error) {
-            toast.error(error)
-          }
-        }
-        // if user searches by client phone number
-      } else if (this.searchBy === 'Client Number') {
-        if (this.phoneNumber) {
-          try {
-            const query = {
-              searchBy: 'number',
-              phoneNumber: this.phoneNumber
-            }
-            const response = await searchClients(query)
-            this.clients = response;
-          } catch (error) {
-            toast.error(error)
-          }
-        }
-      }
-    },
+// null = show every client; otherwise the query object sent to /clients/search
+const activeQuery = ref(null)
+
+const { data, loading, error, execute } = useApi(() =>
+  activeQuery.value ? searchClients(activeQuery.value) : getClients()
+)
+const clients = computed(() => data.value ?? [])
+
+const emptyText = computed(() =>
+  activeQuery.value ? 'No clients match your search.' : 'No clients have been added yet.'
+)
+
+// Column definitions for DataTable. render() builds the display text;
+// sorting uses the same text for the name column.
+const columns = [
+  {
+    label: 'Name',
+    field: 'lastName',
+    render: (c) => `${c.firstName} ${c.lastName}`,
+    sortValue: (c) => `${c.lastName} ${c.firstName}`
   },
+  { label: 'Phone number', field: 'phoneNumber.primary' },
+  { label: 'City', field: 'address.city' }
+]
+
+// was mounted(): this.loadData()
+onMounted(execute)
+
+// was methods.loadData(), used by the Clear Search button
+function clearSearch() {
+  searchBy.value = ''
+  firstName.value = ''
+  lastName.value = ''
+  phoneNumber.value = ''
+  activeQuery.value = null
+  execute()
+}
+
+// was methods.handleSubmitForm()
+function handleSubmitForm() {
+  if (searchBy.value === 'Client Name' && (firstName.value || lastName.value)) {
+    activeQuery.value = { searchBy: 'name', firstName: firstName.value, lastName: lastName.value }
+  } else if (searchBy.value === 'Client Number' && phoneNumber.value) {
+    activeQuery.value = { searchBy: 'number', phoneNumber: phoneNumber.value }
+  } else {
+    return // nothing to search for
+  }
+  execute()
+}
+
+function openClient(client) {
+  router.push({ name: 'clientdetails', params: { id: client._id } })
 }
 </script>
