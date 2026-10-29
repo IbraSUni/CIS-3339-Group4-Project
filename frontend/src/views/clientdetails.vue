@@ -236,7 +236,7 @@ import useVuelidate from '@vuelidate/core'
 import { required, email, numeric, minLength, maxLength } from '@vuelidate/validators'
 import VueMultiselect from 'vue-multiselect'
 import { useLoggedInUserStore } from "../store/loggedInUser";
-import { getClientById, getClientEvents, getNonClientEvents, registerAttendee, deregisterAttendee, updateClient, deleteClientbyId } from '../api/api'
+import { getClientById, getClientEvents, getNonClientEvents, registerAttendee, deregisterAttendee, updateClient, deleteClientById } from '../api/api'
 import { useToast } from 'vue-toastification'
 
 //Notifications
@@ -406,7 +406,7 @@ export default {
     // method called when user attempts to delete client
     async submitDeleteClient() {
       try {
-        const response = await deleteClientbyId(this.$route.params.id);
+        const response = await deleteClientById(this.$route.params.id);
         toast.success(response)
         this.$router.push('/findclient')
       } catch (error) {
