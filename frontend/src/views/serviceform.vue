@@ -66,7 +66,7 @@
                     <div></div>
                     <!-- Add Service submit button -->
                     <div class="flex justify-between mt-10 mr-20">
-                        <button class="bg-red-700 text-white rounded" type="submit">
+                        <button class="bg-red-700 text-white rounded disabled:opacity-50" type="submit" :disabled="submitting">
                             Add Service
                         </button>
                     </div>
@@ -76,59 +76,61 @@
     </main>
 </template>
 
-<script>
-// import vuelidate validations
+<script setup>
+// ---------------------------------------------------------------------------
+// Composition API migration (task F1)
+//   Before: data() { service }, setup() { v$ }, validations(),
+//           methods { handleSubmitForm }.
+//   After:  <script setup>
+//   - data().service   -> reactive() (new services default to "Active")
+//   - validations()    -> `rules` passed to useVuelidate(rules, { service })
+//   - this.$router     -> useRouter()
+//   - toast.error('Error creating new service:', error) passed the error as
+//     the toast's options argument, so it was never shown; now the readable
+//     err.message is displayed.
+// The route is editor-only (meta.requiresEditor).
+// ---------------------------------------------------------------------------
+import { reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useToast } from 'vue-toastification'
 import useVuelidate from '@vuelidate/core'
 import { required } from '@vuelidate/validators'
-import { createService } from '../api/api'
-import { useToast } from 'vue-toastification'
+import { createService, messageOf } from '../api/api'
 
-//Notifications
+const router = useRouter()
 const toast = useToast()
 
-export default {
-    data() {
-        return {
-            //variable to hold new service information
-            service: {
-                name: null,
-                description: null,
-                status: "Active",
-            },
-        }
-    },
-    setup() {
-        // Register Vuelidate
-        const v$ = useVuelidate();
-        return { v$ };
-    },
-    validations() {
-        // validations for service
-        return {
-            service: {
-                name: { required },
-            }
-        }
-    },
-    methods: {
-        // method called when user attempts to create new service
-        async handleSubmitForm() {
-            // Trigger validation
-            this.v$.$validate();
+// was data().service
+const service = reactive({
+  name: null,
+  description: null,
+  status: 'Active'
+})
 
-            if (this.v$.$error) {
-                // Form is invalid, do not proceed
-                return;
-            }
+// was validations()
+const rules = {
+  service: {
+    name: { required }
+  }
+}
+const v$ = useVuelidate(rules, { service })
 
-            try {
-                const response = await createService(this.service);
-                toast.success(response)
-                this.$router.push('/findservice')
-            } catch (error) {
-                toast.error('Error creating new service:', error)
-            }
-        },
-    }
+const submitting = ref(false)
+
+// was methods.handleSubmitForm()
+async function handleSubmitForm() {
+  const isValid = await v$.value.$validate()
+  if (!isValid) return
+
+  submitting.value = true
+  try {
+    const response = await createService(service)
+    toast.success(messageOf(response, 'Service created'))
+    router.push({ name: 'findservice' })
+  } catch (err) {
+    toast.error(err.message)
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
