@@ -157,21 +157,21 @@
         <div class="flex justify-between mt-10 mr-20"></div>
         <!--Update Client submit button-->
         <div class="flex justify-between mt-10 mr-20">
-          <button @click="submitUpdateClient" type="submit" class="bg-green-700 disabled:opacity-50 text-white rounded"
-            :disabled="user.role === 'viewer'">
+          <button @click="submitUpdateClient" type="button" class="bg-green-700 disabled:opacity-50 text-white rounded"
+            :disabled="!user.isEditor || saving">
             Update Client
           </button>
         </div>
         <!--Delete Client button-->
         <div class="flex justify-between mt-10 mr-20">
-          <button @click="submitDeleteClient" type="submit" class="bg-red-700 disabled:opacity-50 text-white rounded"
-            :disabled="user.role === 'viewer'">
+          <button @click="submitDeleteClient" type="button" class="bg-red-700 disabled:opacity-50 text-white rounded"
+            :disabled="!user.isEditor">
             Delete Client
           </button>
         </div>
         <!--Go back button-->
         <div class="flex justify-between mt-10 mr-20">
-          <button type="reset" class="border border-red-700 bg-white text-red-700 rounded" @click=this.$router.back()>
+          <button type="reset" class="border border-red-700 bg-white text-red-700 rounded" @click="router.back()">
             Go back
           </button>
         </div>
@@ -196,17 +196,22 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-300">
-            <tr @click="$router.push({ name: 'eventdetails', params: { id: event._id } })" 
-            v-for="event in clientEvents" :key="event._id" class="cursor-pointer" 
+            <tr @click="openEvent(event._id)" @keyup.enter="openEvent(event._id)" tabindex="0"
+              v-for="event in clientEvents" :key="event._id" class="cursor-pointer"
               :class="{ 'hoverRow': hoverId === event._id }" @mouseenter="hoverId = event._id" @mouseleave="hoverId = null">
               <td class="p-2 text-left">{{ event.name }}</td>
               <td class="p-2 text-left">{{ formatDate(event.date) }}</td>
               <td class="p-2 text-right">
                 <span class="remove-btn-wrapper">
-                  <span class="remove-btn text-gray-400 cursor-pointer"
-                    @click.stop="removeClientFromEvent(client._id, event._id)" v-if="hoverId === event._id">X</span>
+                  <!-- Remove "X": editors only (it had no role check before) -->
+                  <button type="button" class="remove-btn text-gray-400 cursor-pointer"
+                    :aria-label="`Remove client from ${event.name}`"
+                    @click.stop="removeClientFromEvent(event._id)" v-if="hoverId === event._id && user.isEditor">X</button>
                 </span>
               </td>
+            </tr>
+            <tr v-if="!clientEvents.length">
+              <td colspan="3" class="p-4 text-center text-gray-600">This client is not registered for any events.</td>
             </tr>
           </tbody>
         </table>
@@ -220,8 +225,8 @@
           :close-on-select="true" placeholder="Select Events to be added" label="date" track-by="name" />
         <div class="flex justify-between">
           <!--button to add client to events-->
-          <button @click="addClientToEvent" type="submit" class="mt-5 bg-red-700 disabled:opacity-50 text-white rounded"
-            :disabled="eventsSelected.length === 0 || user.role === 'viewer'">
+          <button @click="addClientToEvent" type="button" class="mt-5 bg-red-700 disabled:opacity-50 text-white rounded"
+            :disabled="eventsSelected.length === 0 || !user.isEditor">
             Add Client to Selected Events
           </button>
         </div>
@@ -231,188 +236,204 @@
   </main>
 </template>
 
-<script>
+<script setup>
+// ---------------------------------------------------------------------------
+// Composition API migration (task F1)
+//   Before: components: { VueMultiselect }, setup() { v$, user }, data option
+//           { eventsFiltered, eventsSelected, clientEvents, client, hoverId },
+//           validations option, mounted hook, and six methods using this.$route /
+//           this.$router.
+//   After:  <script setup>
+//   - components: {}        -> the imported VueMultiselect is used directly
+//   - data option fields         -> ref()
+//   - validations option         -> `rules` + useVuelidate(rules, { client })
+//   - mounted hook             -> onMounted(loadClient)
+//   - this.$route.params.id -> useRoute(); clientId = computed(...)
+//   - this.$router          -> useRouter()
+//   - formatDate method     -> shared utils/formatDate.js
+// Behaviour fixed during the migration:
+//   - Role checks were a denylist (role === 'viewer'). They now use the store's
+//     isEditor allowlist, and the "X" that removes a client from an event,
+//     which had no role check at all, only shows for editors.
+//   - Delete now asks for confirmation before calling the API.
+//   - Error toasts used to receive objects ([object Object]) or pass the error
+//     as the options argument; they now show err.message from the interceptor.
+//   - Registering for several events reports which ones failed instead of
+//     swallowing the error inside an un-awaited Promise.all.
+//   - Register/deregister replies are read with messageOf(), which accepts the
+//     current plain-text reply and the { message } reply planned for B1.
+// ---------------------------------------------------------------------------
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useToast } from 'vue-toastification'
 import useVuelidate from '@vuelidate/core'
 import { required, email, numeric, minLength, maxLength } from '@vuelidate/validators'
 import VueMultiselect from 'vue-multiselect'
-import { useLoggedInUserStore } from "../store/loggedInUser";
-import { getClientById, getClientEvents, getNonClientEvents, registerAttendee, deregisterAttendee, updateClient, deleteClientById } from '../api/api'
-import { useToast } from 'vue-toastification'
+import { useLoggedInUserStore } from '../store/loggedInUser'
+import {
+  getClientById,
+  getClientEvents,
+  getNonClientEvents,
+  registerAttendee,
+  deregisterAttendee,
+  updateClient,
+  deleteClientById,
+  messageOf
+} from '../api/api'
+import { formatDate } from '../utils/formatDate'
 
-//Notifications
+const route = useRoute()
+const router = useRouter()
 const toast = useToast()
+const user = useLoggedInUserStore()
 
-export default {
-  // register components
-  components: {
-    VueMultiselect,
-  },
-  setup() {
-    // register Vuelidate and loggedIn store
-    const v$ = useVuelidate();
-    const user = useLoggedInUserStore();
-    return { v$, user };
-  },
-  data() {
-    return {
-      // events that the client is not registered in - to be shown in the multiselect
-      eventsFiltered: [],
-      // events that user selects from multiselect list
-      eventsSelected: [],
-      //variable to hold the events that the selected client is associated with
-      clientEvents: [],
-      //variable to hold client information  
-      client: {
-        firstName: null,
-        middleName: null,
-        lastName: null,
-        email: null,
-        phoneNumber: {
-          primary: null,
-          alternate: null
-        },
-        address: {
-          line1: null,
-          line2: null,
-          city: null,
-          county: null,
-          zip: null
-        }
-      },
-      // variable stores the ID of the row that the mouse is currently hovering over (to highlight the row red)
-      hoverId: null
+const clientId = computed(() => route.params.id)
+
+// Shape of an empty client, also used to fill in any missing nested objects
+// on the record that comes back from the API.
+function emptyClient() {
+  return {
+    firstName: null,
+    middleName: null,
+    lastName: null,
+    email: null,
+    phoneNumber: { primary: null, alternate: null },
+    address: { line1: null, line2: null, city: null, county: null, zip: null }
+  }
+}
+
+// ---- state (was data option) ----
+const client = ref(emptyClient())
+const clientEvents = ref([])   // events the client is registered for
+const eventsFiltered = ref([])  // events the client is NOT registered for (multiselect options)
+const eventsSelected = ref([])  // events picked in the multiselect
+const hoverId = ref(null)       // row under the mouse, to show the remove "X"
+const saving = ref(false)
+
+// ---- validation (was validations option) ----
+const rules = {
+  client: {
+    firstName: { required },
+    lastName: { required },
+    email: { required, email },
+    phoneNumber: {
+      primary: {
+        required,
+        numeric,
+        minLength: minLength(10),
+        maxLength: maxLength(10)
+      }
+    },
+    address: {
+      city: { required }
     }
-  },
-  validations() {
-    // validations
-    return {
-      client: {
-        firstName: { required },
-        lastName: { required },
-        email: { required, email },
-        phoneNumber: {
-          primary: {
-            required,
-            numeric,
-            minLength: minLength(10),
-            maxLength: maxLength(10),
-          },
-        },
-        address: {
-          city: { required },
-        },
-      },
-    };
-  },
-  async mounted() {
-    // when component is mounted, data is loaded
-    // get client information, events the client is registered in, and events that client is not registered in
-    try {
-      const [clientResponse, clientEventsResponse, nonClientEventsResponse] = await Promise.all([
-        getClientById(this.$route.params.id),
-        getClientEvents(this.$route.params.id),
-        getNonClientEvents(this.$route.params.id),
-      ]);
+  }
+}
+const v$ = useVuelidate(rules, { client })
 
-      this.client = clientResponse;
-      this.clientEvents = clientEventsResponse;
-      this.eventsFiltered = nonClientEventsResponse;
-
-    } catch (error) {
-      toast.error('error loading data:', error)
+// ---- loading (was mounted hook) ----
+async function loadClient() {
+  try {
+    const [clientResponse, registered, notRegistered] = await Promise.all([
+      getClientById(clientId.value),
+      getClientEvents(clientId.value),
+      getNonClientEvents(clientId.value)
+    ])
+    const empty = emptyClient()
+    client.value = {
+      ...empty,
+      ...clientResponse,
+      phoneNumber: { ...empty.phoneNumber, ...clientResponse.phoneNumber },
+      address: { ...empty.address, ...clientResponse.address }
     }
-  },
-  methods: {
-    // method called to format the event date
-    formatDate(date) {
-      const isoDate = new Date(date);
-      const year = isoDate.getUTCFullYear();
-      const month = String(isoDate.getUTCMonth() + 1).padStart(2, '0');
-      const day = String(isoDate.getUTCDate()).padStart(2, '0');
-      return `${month}/${day}/${year}`;
-    },
-    //custom label for multiselect
-    nameWithDate({ name, date }) {
-      return `${name} (${this.formatDate(date)})`
-    },
+    clientEvents.value = registered
+    eventsFiltered.value = notRegistered
+  } catch (err) {
+    toast.error(`Could not load the client: ${err.message}`)
+  }
+}
 
-    // method called to remove client from event
-    async removeClientFromEvent(clientId, eventId) {
-      // remove client ID from the "attendees" array for that event
-      try {
-        const response = await deregisterAttendee(eventId, clientId);
-        toast.success(response)
-      } catch (error) {
-        toast.error(error);
-      }
-      // update events for which client is registered, and events for which client is not registered
-      try {
-        this.clientEvents = await getClientEvents(this.$route.params.id);
-        this.eventsFiltered = await getNonClientEvents(this.$route.params.id);
-      } catch (error) {
-        toast.error(error);
-      }
-    },
+async function refreshEventLists() {
+  try {
+    const [registered, notRegistered] = await Promise.all([
+      getClientEvents(clientId.value),
+      getNonClientEvents(clientId.value)
+    ])
+    clientEvents.value = registered
+    eventsFiltered.value = notRegistered
+  } catch (err) {
+    toast.error(`Could not refresh the event lists: ${err.message}`)
+  }
+}
 
-    // method called to add client to an event
-    async addClientToEvent() {
-      try {
-        const client = this.client._id;
-        const events = this.eventsSelected.map((event) => event._id);
-        const promises = [];
+onMounted(loadClient)
 
-        for (const eventId of events) {
-          promises.push(registerAttendee(eventId, client));
-        }
+// ---- helpers ----
+// custom label for the multiselect (was method nameWithDate)
+function nameWithDate({ name, date }) {
+  return `${name} (${formatDate(date)})`
+}
 
-        Promise.all(promises)
-          .then(async () => {
-            try {
-              this.clientEvents = await getClientEvents(this.$route.params.id);
-              this.eventsFiltered = await getNonClientEvents(this.$route.params.id);
-              this.eventsSelected = [];
-            } catch (error) {
-              toast.error(error);
-            }
-          })
-          .catch((error) => {
-            toast.error(error);
-          });
-      } catch (error) {
-        toast.error(error);
-      }
+function openEvent(id) {
+  router.push({ name: 'eventdetails', params: { id } })
+}
 
-    },
+// ---- actions (were methods) ----
 
-    // update client information
-    async submitUpdateClient() {
-      // Trigger validation
-      this.v$.$validate();
+// remove the client from one event
+async function removeClientFromEvent(eventId) {
+  try {
+    const response = await deregisterAttendee(eventId, clientId.value)
+    toast.success(messageOf(response, 'Client removed from event'))
+  } catch (err) {
+    toast.error(err.message)
+  }
+  await refreshEventLists()
+}
 
-      if (this.v$.$error) {
-        // Form is invalid, do not proceed
-        return;
-      }
+// register the client for every event picked in the multiselect
+async function addClientToEvent() {
+  const selected = eventsSelected.value
+  if (!selected.length) return
+  const results = await Promise.allSettled(selected.map((event) => registerAttendee(event._id, clientId.value)))
 
-      try {
-        const response = await updateClient(this.$route.params.id, this.client);
-        this.$router.push('/findclient')
-        toast.success(response)
-      } catch (error) {
-        toast.error(error)
-      }
-    },
+  const failed = results
+    .map((result, i) => ({ result, event: selected[i] }))
+    .filter(({ result }) => result.status === 'rejected')
+  const succeeded = results.length - failed.length
 
-    // method called when user attempts to delete client
-    async submitDeleteClient() {
-      try {
-        const response = await deleteClientById(this.$route.params.id);
-        toast.success(response)
-        this.$router.push('/findclient')
-      } catch (error) {
-        toast.error(error);
-      }
-    },
+  if (succeeded) toast.success(`Client added to ${succeeded} event${succeeded === 1 ? '' : 's'}`)
+  failed.forEach(({ result, event }) => toast.error(`${event.name}: ${result.reason.message}`))
+
+  eventsSelected.value = []
+  await refreshEventLists()
+}
+
+async function submitUpdateClient() {
+  const isValid = await v$.value.$validate()
+  if (!isValid) return
+  saving.value = true
+  try {
+    const response = await updateClient(clientId.value, client.value)
+    toast.success(messageOf(response, 'Client updated'))
+    router.push({ name: 'findclient' })
+  } catch (err) {
+    toast.error(err.message)
+  } finally {
+    saving.value = false
+  }
+}
+
+async function submitDeleteClient() {
+  const fullName = `${client.value.firstName ?? ''} ${client.value.lastName ?? ''}`.trim()
+  if (!window.confirm(`Delete ${fullName || 'this client'}? This cannot be undone.`)) return
+  try {
+    const response = await deleteClientById(clientId.value)
+    toast.success(messageOf(response, 'Client deleted'))
+    router.push({ name: 'findclient' })
+  } catch (err) {
+    // e.g. 406 "Client is signed up for events and can't be deleted."
+    toast.error(err.message)
   }
 }
 </script>
@@ -424,6 +445,12 @@ export default {
 .remove-btn-wrapper {
   display: inline-block;
   position: relative;
+}
+
+.remove-btn {
+  padding: 0 6px;
+  background: none;
+  border: 0;
 }
 
 .remove-btn:hover {
