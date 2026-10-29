@@ -165,7 +165,7 @@
 
           <!-- Add Client Submit Button -->
           <div class="flex justify-between mt-10 mr-20">
-            <button class="bg-red-700 text-white rounded" type="submit">
+            <button class="bg-red-700 text-white rounded disabled:opacity-50" type="submit" :disabled="submitting">
               Add Client
             </button>
           </div>
@@ -175,84 +175,88 @@
   </main>
 </template>
 
-<script>
-//import functionalities for validation
+<script setup>
+// ---------------------------------------------------------------------------
+// Composition API migration (task F1)
+//   Before: data() { client }, setup() { v$ = useVuelidate() },
+//           validations() { ... }, methods { submitForm }.
+//   After:  <script setup>
+//   - data().client          -> reactive(emptyClient())
+//   - validations()          -> a plain `rules` object
+//   - useVuelidate()         -> useVuelidate(rules, { client }); without the
+//                               Options API, Vuelidate must be given the rules
+//                               and the state explicitly
+//   - this.$router           -> useRouter()
+//   - toast.error(error)     -> toast.error(err.message) (readable text from
+//                               the api.js interceptor, never [object Object])
+// The route itself is editor-only (meta.requiresEditor in router/index.js).
+// ---------------------------------------------------------------------------
+import { reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useToast } from 'vue-toastification'
 import useVuelidate from '@vuelidate/core'
 import { required, email, numeric, minLength, maxLength } from '@vuelidate/validators'
-import { createClient } from '../api/api'
-import { useToast } from 'vue-toastification'
+import { createClient, messageOf } from '../api/api'
 
-//Notifications
+const router = useRouter()
 const toast = useToast()
 
-export default {
-  data() {
-    return {
-      //client variable to hold new client information
-      client: {
-        firstName: null,
-        middleName: null,
-        lastName: null,
-        email: null,
-        phoneNumber: {
-          primary: null,
-          alternate: null
-        },
-        address: {
-          line1: null,
-          line2: null,
-          city: null,
-          county: null,
-          zip: null
-        },
-      }
-    }
+// was data(): the new client's fields
+const client = reactive({
+  firstName: null,
+  middleName: null,
+  lastName: null,
+  email: null,
+  phoneNumber: {
+    primary: null,
+    alternate: null
   },
-  setup() {
-    // Register Vuelidate
-    const v$ = useVuelidate();
-    return { v$ };
-  },
-  validations() {
-    // validations for client
-    return {
-      client: {
-        firstName: { required },
-        lastName: { required },
-        email: { required, email },
-        phoneNumber: {
-          primary: {
-            required,
-            numeric,
-            minLength: minLength(10),
-            maxLength: maxLength(10),
-          },
-        },
-        address: {
-          city: { required },
-        },
-      },
-    };
-  },
-  methods: {
-    // method called when user submits the form
-    async submitForm() {
-      // Trigger validation
-      this.v$.$validate();
+  address: {
+    line1: null,
+    line2: null,
+    city: null,
+    county: null,
+    zip: null
+  }
+})
 
-      if (this.v$.$error) {
-        // Form is invalid, do not proceed
-        return;
-      }
-
-      try {
-        const response = await createClient(this.client);
-        this.$router.push('/findclient')
-        toast.success(response)
-      } catch (error) {
-        toast.error(error)
+// was validations()
+const rules = {
+  client: {
+    firstName: { required },
+    lastName: { required },
+    email: { required, email },
+    phoneNumber: {
+      primary: {
+        required,
+        numeric,
+        minLength: minLength(10),
+        maxLength: maxLength(10)
       }
     },
+    address: {
+      city: { required }
+    }
+  }
+}
+const v$ = useVuelidate(rules, { client })
+
+const submitting = ref(false)
+
+// was methods.submitForm()
+async function submitForm() {
+  const isValid = await v$.value.$validate()
+  if (!isValid) return // validation messages are shown next to each field
+
+  submitting.value = true
+  try {
+    const response = await createClient(client)
+    toast.success(messageOf(response, 'Client created'))
+    router.push({ name: 'findclient' })
+  } catch (err) {
+    toast.error(err.message)
+  } finally {
+    submitting.value = false
   }
 }
 </script>
