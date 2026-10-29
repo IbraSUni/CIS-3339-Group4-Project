@@ -85,15 +85,15 @@
 <script setup>
 // ---------------------------------------------------------------------------
 // Composition API migration (task F1), useApi (task F2), DataTable (task F3)
-//   Before: data() { events, searchBy, name, eventDate, hoverId }, mounted(),
-//           methods { loadData, handleSubmitForm, formatDate }.
+//   Before: data option { events, searchBy, name, eventDate, hoverId }, mounted hook,
+//           methods option { loadData, handleSubmitForm, formatDate }.
 //   After:
 //   - search fields          -> ref()
 //   - events/loading/error   -> useApi(); execute() re-runs the current list or search
 //   - formatDate method      -> shared utils/formatDate.js (used by the Date column)
 //   - <table> + hoverId      -> <DataTable>
 // Bugs removed during the migration:
-//   - loadData() set this.isLoading, which was never declared in data().
+//   - loadData() set this.isLoading, which was never declared in data option: 
 //   - toast.error('Error searching events', error) passed the error as the
 //     toast OPTIONS argument, so the actual message was silently dropped.
 // ---------------------------------------------------------------------------
@@ -106,7 +106,7 @@ import { formatDate, toDateInputValue } from '../utils/formatDate'
 
 const router = useRouter()
 
-// was data(): search parameters
+// was data option: search parameters
 const searchBy = ref('')
 const name = ref('')
 const eventDate = ref('')

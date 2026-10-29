@@ -10,7 +10,7 @@
 // Composition API migration (task F1)
 //   - props: { label, chartData }  -> defineProps()
 //   - this.$refs.attendanceChart   -> const canvasRef = ref(null)
-//   - mounted()                    -> onMounted()
+//   - mounted hook                    -> onMounted()
 // Behaviour fixed during the migration:
 //   - The old component built the chart once and never looked at its props
 //     again. A watch() now pushes new labels/data into the existing chart.

@@ -157,15 +157,15 @@
 <script setup>
 // ---------------------------------------------------------------------------
 // Composition API migration (task F1)
-//   Before: data() { event, activeServices, openDescriptions },
-//           setup() { v$ }, validations() with two inline custom validators,
-//           mounted() loading services, methods { handleSubmitForm }.
+//   Before: data option { event, activeServices, openDescriptions },
+//           setup() { v$ }, validations option with two inline custom validators,
+//           mounted hook loading services, methods option { handleSubmitForm }.
 //   After:  <script setup>
-//   - data().event           -> reactive()
+//   - data option: event           -> reactive()
 //   - activeServices         -> ref([])
 //   - openDescriptions       -> removed (declared but never used)
-//   - validations()          -> `rules`, passed to useVuelidate(rules, { event })
-//   - mounted()              -> onMounted(loadActiveServices)
+//   - validations option          -> `rules`, passed to useVuelidate(rules, { event })
+//   - mounted hook              -> onMounted(loadActiveServices)
 //   - this.$router           -> useRouter()
 // Fixed during the migration: the Description textarea had no v-model, so
 // anything typed into it was never saved. It is now bound to event.description.
@@ -181,7 +181,7 @@ import { getServices, createEvent, messageOf } from '../api/api'
 const router = useRouter()
 const toast = useToast()
 
-// was data().event
+// was data option: event
 const event = reactive({
   name: null,
   description: null,
@@ -197,10 +197,10 @@ const event = reactive({
   attendees: []
 })
 
-// was data().activeServices: only Active services can be offered at an event
+// was data option: activeServices: only Active services can be offered at an event
 const activeServices = ref([])
 
-// ---- validation (was validations()) ----
+// ---- validation (was validations option) ----
 const validDate = (value) => !helpers.req(value) || !Number.isNaN(new Date(value).getTime())
 
 // A new event cannot be scheduled in the past. The comparison is on the
@@ -222,7 +222,7 @@ const v$ = useVuelidate(rules, { event })
 
 const submitting = ref(false)
 
-// was mounted()
+// was mounted hook
 async function loadActiveServices() {
   try {
     const services = await getServices()
@@ -233,7 +233,7 @@ async function loadActiveServices() {
 }
 onMounted(loadActiveServices)
 
-// was methods.handleSubmitForm()
+// was method handleSubmitForm()
 async function handleSubmitForm() {
   const isValid = await v$.value.$validate()
   if (!isValid) {

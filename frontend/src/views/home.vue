@@ -109,15 +109,15 @@
 <script setup>
 // ---------------------------------------------------------------------------
 // Composition API migration (task F1) + useApi (task F2)
-//   Before: data() held 10 fields (recentEvents, zips, labels, chartData,
+//   Before: data option held 10 fields (recentEvents, zips, labels, chartData,
 //           loading, error, zipLoading, zipError, ...) and two methods that
-//           each hand-rolled the same try/catch/loading logic, mounted() called
+//           each hand-rolled the same try/catch/loading logic, mounted hook called
 //           both, and formatDate() was a local method.
 //   After:
 //   - each request is one useApi() call that owns its own data/loading/error
 //   - chart labels and values are computed() from the API data instead of
-//     being copied into separate data() fields
-//   - mounted()        -> onMounted()
+//     being copied into separate data option fields
+//   - mounted hook        -> onMounted()
 //   - formatDate()     -> shared utils/formatDate.js
 //   - components: {}   -> imported components are usable directly
 // The old error box branched on err.response / err.request to build a
@@ -143,17 +143,17 @@ const router = useRouter()
 const attendance = useApi(() => getAttendance())
 const zipCounts = useApi(() => getClientsByZipCode())
 
-// was data(): recentEvents, labels, chartData
+// was data option: recentEvents, labels, chartData
 const recentEvents = computed(() => attendance.data.value ?? [])
 const attendanceLabels = computed(() => recentEvents.value.map((e) => `${e.name} (${formatDate(e.date)})`))
 const attendanceCounts = computed(() => recentEvents.value.map((e) => e.attendees.length))
 
-// was data(): zips, zipLabels, zipChartData
+// was data option: zips, zipLabels, zipChartData
 const zips = computed(() => zipCounts.data.value ?? [])
 const zipLabels = computed(() => zips.value.map((z) => z._id))
 const zipValues = computed(() => zips.value.map((z) => z.count))
 
-// was mounted(): this.getAttendanceData(); this.getZipData()
+// was mounted hook: this.getAttendanceData(); this.getZipData()
 onMounted(() => {
   attendance.execute()
   zipCounts.execute()

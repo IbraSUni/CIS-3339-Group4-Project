@@ -84,8 +84,8 @@
 <script setup>
 // ---------------------------------------------------------------------------
 // Composition API migration (task F1), useApi (task F2), DataTable (task F3)
-//   Before: data() { services, searchBy, name, description, hoverId },
-//           mounted(), methods { loadData, handleSubmitForm }.
+//   Before: data option { services, searchBy, name, description, hoverId },
+//           mounted hook, methods option { loadData, handleSubmitForm }.
 //   After:
 //   - search fields            -> ref()
 //   - services/loading/error   -> useApi(); execute() re-runs the list or search
@@ -100,7 +100,7 @@ import { useApi } from '../composables/useApi'
 
 const router = useRouter()
 
-// was data(): search parameters
+// was data option: search parameters
 const searchBy = ref('')
 const name = ref('')
 const description = ref('')

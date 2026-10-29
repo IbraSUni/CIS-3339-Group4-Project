@@ -94,15 +94,15 @@
 <script setup>
 // ---------------------------------------------------------------------------
 // Composition API migration (task F1), useApi (task F2), DataTable (task F3)
-//   Before: data() { clients, searchBy, firstName, lastName, phoneNumber,
-//           hoverId }, mounted() -> loadData(), methods { loadData,
+//   Before: data option { clients, searchBy, firstName, lastName, phoneNumber,
+//           hoverId }, mounted hook -> loadData(), methods option { loadData,
 //           handleSubmitForm }, and a hand-written <table>.
 //   After:
 //   - search fields       -> ref('')
 //   - clients/loading/error -> one useApi() call. The call reads activeQuery,
 //     so execute() re-runs whatever the user last asked for: the full list,
 //     or the last search. The Retry button simply calls execute() again.
-//   - mounted()           -> onMounted(execute)
+//   - mounted hook           -> onMounted(execute)
 //   - $router.push(...)   -> useRouter().push(...)
 //   - hoverId + <table>   -> <DataTable> (sorting, paging, empty row built in)
 //   - every `toast.error(error)` that showed [object Object] is gone; errors
@@ -116,7 +116,7 @@ import { useApi } from '../composables/useApi'
 
 const router = useRouter()
 
-// was data(): search parameters
+// was data option: search parameters
 const searchBy = ref('')
 const firstName = ref('')
 const lastName = ref('')
@@ -147,10 +147,10 @@ const columns = [
   { label: 'City', field: 'address.city' }
 ]
 
-// was mounted(): this.loadData()
+// was mounted hook: this.loadData()
 onMounted(execute)
 
-// was methods.loadData(), used by the Clear Search button
+// was method loadData(), used by the Clear Search button
 function clearSearch() {
   searchBy.value = ''
   firstName.value = ''
@@ -160,7 +160,7 @@ function clearSearch() {
   execute()
 }
 
-// was methods.handleSubmitForm()
+// was method handleSubmitForm()
 function handleSubmitForm() {
   if (searchBy.value === 'Client Name' && (firstName.value || lastName.value)) {
     activeQuery.value = { searchBy: 'name', firstName: firstName.value, lastName: lastName.value }

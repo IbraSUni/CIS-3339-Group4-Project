@@ -94,16 +94,16 @@
 <script setup>
 // ---------------------------------------------------------------------------
 // Composition API migration (task F1)
-//   Before: export default { setup(), data(), created(), methods }
+//   Before: Options API object { setup(), data option, created hook, methods }
 //   After:  <script setup>
-//   - data() { orgName }          -> const orgName = ref(...)
-//   - created() { getOrgName() }  -> onMounted(loadOrgName)
-//   - methods.logout()            -> handleLogout()
+//   - data option { orgName }          -> const orgName = ref(...)
+//   - created hook { getOrgName() }  -> onMounted(loadOrgName)
+//   - method logout()            -> handleLogout()
 //   - this.$router                -> useRouter()
 // Two template bugs were removed during the migration:
-//   - created() had `catch { throw (error) }`, which threw a ReferenceError
+//   - created hook had `catch { throw (error) }`, which threw a ReferenceError
 //     because `error` was never declared. The catch now keeps the default name.
-//   - methods.logout() called this.$store.dispatch(...), which is the Vuex API.
+//   - method logout() called this.$store.dispatch(...), which is the Vuex API.
 //     This project uses Pinia, so that method could never have worked (and the
 //     nav never called it). It is replaced by handleLogout() below.
 // ---------------------------------------------------------------------------
@@ -117,10 +117,10 @@ const user = useLoggedInUserStore()
 const router = useRouter()
 const toast = useToast()
 
-// was data(): { orgName: 'Dataplatform' }
+// was data option: { orgName: 'Dataplatform' }
 const orgName = ref('Dataplatform')
 
-// was created(): the org name is public, so it loads even before login.
+// was created hook: the org name is public, so it loads even before login.
 async function loadOrgName() {
   try {
     orgName.value = await getOrgName()
@@ -131,7 +131,7 @@ async function loadOrgName() {
 }
 onMounted(loadOrgName)
 
-// was methods.logout(): clears the token + Pinia state, then goes to /login.
+// was method logout(): clears the token + Pinia state, then goes to /login.
 function handleLogout() {
   user.logout()
   toast.info('You have been logged out.')

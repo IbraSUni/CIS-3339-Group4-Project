@@ -178,11 +178,11 @@
 <script setup>
 // ---------------------------------------------------------------------------
 // Composition API migration (task F1)
-//   Before: data() { client }, setup() { v$ = useVuelidate() },
-//           validations() { ... }, methods { submitForm }.
+//   Before: data option { client }, setup() { v$ = useVuelidate() },
+//           validations option { ... }, methods option { submitForm }.
 //   After:  <script setup>
-//   - data().client          -> reactive(emptyClient())
-//   - validations()          -> a plain `rules` object
+//   - data option: client          -> reactive(emptyClient())
+//   - validations option          -> a plain `rules` object
 //   - useVuelidate()         -> useVuelidate(rules, { client }); without the
 //                               Options API, Vuelidate must be given the rules
 //                               and the state explicitly
@@ -201,7 +201,7 @@ import { createClient, messageOf } from '../api/api'
 const router = useRouter()
 const toast = useToast()
 
-// was data(): the new client's fields
+// was data option: the new client's fields
 const client = reactive({
   firstName: null,
   middleName: null,
@@ -220,7 +220,7 @@ const client = reactive({
   }
 })
 
-// was validations()
+// was validations option
 const rules = {
   client: {
     firstName: { required },
@@ -243,7 +243,7 @@ const v$ = useVuelidate(rules, { client })
 
 const submitting = ref(false)
 
-// was methods.submitForm()
+// was method submitForm()
 async function submitForm() {
   const isValid = await v$.value.$validate()
   if (!isValid) return // validation messages are shown next to each field

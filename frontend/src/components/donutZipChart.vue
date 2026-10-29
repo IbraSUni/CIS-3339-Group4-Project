@@ -10,7 +10,7 @@
 // Composition API migration (task F1)
 //   - props: { label, chartData }  -> defineProps()
 //   - this.$refs.zipChart          -> const canvasRef = ref(null)
-//   - mounted()                    -> onMounted()
+//   - mounted hook                    -> onMounted()
 // Same fixes as barChart.vue: the chart now reacts to new props through
 // watch(), is destroyed in onBeforeUnmount(), and no longer awaits a
 // constructor.

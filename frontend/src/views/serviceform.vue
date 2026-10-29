@@ -79,11 +79,11 @@
 <script setup>
 // ---------------------------------------------------------------------------
 // Composition API migration (task F1)
-//   Before: data() { service }, setup() { v$ }, validations(),
-//           methods { handleSubmitForm }.
+//   Before: data option { service }, setup() { v$ }, validations option,
+//           methods option { handleSubmitForm }.
 //   After:  <script setup>
-//   - data().service   -> reactive() (new services default to "Active")
-//   - validations()    -> `rules` passed to useVuelidate(rules, { service })
+//   - data option: service   -> reactive() (new services default to "Active")
+//   - validations option    -> `rules` passed to useVuelidate(rules, { service })
 //   - this.$router     -> useRouter()
 //   - toast.error('Error creating new service:', error) passed the error as
 //     the toast's options argument, so it was never shown; now the readable
@@ -100,14 +100,14 @@ import { createService, messageOf } from '../api/api'
 const router = useRouter()
 const toast = useToast()
 
-// was data().service
+// was data option: service
 const service = reactive({
   name: null,
   description: null,
   status: 'Active'
 })
 
-// was validations()
+// was validations option
 const rules = {
   service: {
     name: { required }
@@ -117,7 +117,7 @@ const v$ = useVuelidate(rules, { service })
 
 const submitting = ref(false)
 
-// was methods.handleSubmitForm()
+// was method handleSubmitForm()
 async function handleSubmitForm() {
   const isValid = await v$.value.$validate()
   if (!isValid) return

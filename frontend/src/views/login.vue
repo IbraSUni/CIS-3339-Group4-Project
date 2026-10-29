@@ -37,9 +37,9 @@
 <script setup>
 // ---------------------------------------------------------------------------
 // Composition API migration (task F1)
-//   Before: export default { data() { username, password }, setup() { store } }
+//   Before: Options API object { data option { username, password }, setup() { store } }
 //   After:  <script setup>
-//   - data() fields         -> ref('')
+//   - data option fields         -> ref('')
 //   - setup() return value  -> top-level consts are exposed automatically
 //   - the store used to navigate after login through an injected router;
 //     now this view does it with useRouter() and honours ?redirect=...
@@ -55,7 +55,7 @@ const route = useRoute()
 const router = useRouter()
 const toast = useToast()
 
-// was data(): { username: '', password: '' }
+// was data option: { username: '', password: '' }
 const username = ref('')
 const password = ref('')
 const submitting = ref(false)
