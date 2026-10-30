@@ -1,25 +1,25 @@
 <!-- This view allows a user to view/update a specific client's information. -->
 <template>
-  <main>
+  <div class="page">
     <!--Header-->
-    <h1 class="font-bold text-4xl text-red-700 tracking-widest text-center mt-10">
+    <h1 class="page-title">
       Client Details
     </h1>
-    <div class="px-10 py-20">
+    <div class="card card-body mt-6">
       <!-- grid container -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10">
-        <h2 class="text-2xl font-bold">Personal Details</h2>
+      <div class="form-grid">
+        <h2 class="section-title">Personal Details</h2>
         <!-- First Name input field -->
         <div class="flex flex-col">
           <label class="block">
-            <span class="text-gray-700">First Name</span>
-            <span style="color: #ff0000">*</span>
+            <span class="form-label">First Name</span>
+            <span class="required-mark" aria-hidden="true">*</span>
             <input type="text"
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              class="form-control"
               placeholder v-model="client.firstName" />
           </label>
           <!-- Validation error messages -->
-          <span v-if="v$.client.firstName.$error" class="text-red-500">
+          <span v-if="v$.client.firstName.$error" class="field-error">
             First Name is required
           </span>
         </div>
@@ -27,9 +27,9 @@
         <!-- Middle name input field -->
         <div class="flex flex-col">
           <label class="block">
-            <span class="text-gray-700">Middle Name</span>
+            <span class="form-label">Middle Name</span>
             <input type="text"
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              class="form-control"
               placeholder v-model="client.middleName" />
           </label>
         </div>
@@ -37,14 +37,14 @@
         <!-- Last Name input field -->
         <div class="flex flex-col">
           <label class="block">
-            <span class="text-gray-700">Last Name</span>
-            <span style="color: #ff0000">*</span>
+            <span class="form-label">Last Name</span>
+            <span class="required-mark" aria-hidden="true">*</span>
             <input type="text"
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              class="form-control"
               placeholder v-model="client.lastName" />
           </label>
           <!-- Validation error messages -->
-          <span v-if="v$.client.lastName.$error" class="text-red-500">
+          <span v-if="v$.client.lastName.$error" class="field-error">
             Last Name is required
           </span>
         </div>
@@ -52,27 +52,27 @@
         <!-- Email input field -->
         <div class="flex flex-col">
           <label class="block">
-            <span class="text-gray-700">Email</span>
+            <span class="form-label">Email</span>
             <input type="email"
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              class="form-control"
               v-model="client.email" />
           </label>
           <!-- Validation error messages -->
-          <span v-if="v$.client.email.$error" class="text-red-500">
+          <span v-if="v$.client.email.$error" class="field-error">
             Valid Email is required
           </span>
         </div>
         <!-- Phone number input field -->
         <div class="flex flex-col">
           <label class="block">
-            <span class="text-gray-700">Phone Number</span>
-            <span style="color: #ff0000">*</span>
+            <span class="form-label">Phone Number</span>
+            <span class="required-mark" aria-hidden="true">*</span>
             <input type="text"
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              class="form-control"
               pattern="^[0-9]{3}[0-9]{3}[0-9]{4}$" v-model="client.phoneNumber.primary" />
           </label>
           <!-- Validation error messages -->
-          <span v-if="v$.client.phoneNumber.primary.$error" class="text-red-500">
+          <span v-if="v$.client.phoneNumber.primary.$error" class="field-error">
             <span v-if="v$.client.phoneNumber.primary.required.$invalid">Phone Number is required</span>
             <span
               v-else-if="!v$.client.phoneNumber.primary.required.$invalid && v$.client.phoneNumber.primary.numeric.$invalid">
@@ -87,46 +87,46 @@
         <!-- Alternative phone number input field -->
         <div class="flex flex-col">
           <label class="block">
-            <span class="text-gray-700">Alternative Phone Number</span>
+            <span class="form-label">Alternative Phone Number</span>
             <input type="text"
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              class="form-control"
               pattern="[0-9]{3}[0-9]{3}[0-9]{4}" v-model="client.phoneNumber.alternate" />
           </label>
         </div>
       </div>
 
       <!-- grid container -->
-      <div class="mt-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10">
-        <h2 class="text-2xl font-bold">Address Details</h2>
+      <div class="form-grid mt-8 border-t border-zinc-100 pt-8">
+        <h2 class="section-title">Address Details</h2>
         <!-- Address 1 input field -->
         <div class="flex flex-col">
           <label class="block">
-            <span class="text-gray-700">Address Line 1</span>
+            <span class="form-label">Address Line 1</span>
             <input type="text"
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              class="form-control"
               v-model="client.address.line1" />
           </label>
         </div>
         <!-- Address 2 input field -->
         <div class="flex flex-col">
           <label class="block">
-            <span class="text-gray-700">Address Line 2</span>
+            <span class="form-label">Address Line 2</span>
             <input type="text"
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              class="form-control"
               v-model="client.address.line2" />
           </label>
         </div>
         <!-- City input field -->
         <div class="flex flex-col">
           <label class="block">
-            <span class="text-gray-700">City</span>
-            <span style="color: #ff0000">*</span>
+            <span class="form-label">City</span>
+            <span class="required-mark" aria-hidden="true">*</span>
             <input type="text"
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              class="form-control"
               v-model="client.address.city" />
           </label>
           <!-- Validation error messages -->
-          <span v-if="v$.client.address.city.$error" class="text-red-500">
+          <span v-if="v$.client.address.city.$error" class="field-error">
             City is required
           </span>
         </div>
@@ -134,18 +134,18 @@
         <!-- County input field -->
         <div class="flex flex-col">
           <label class="block">
-            <span class="text-gray-700">County</span>
+            <span class="form-label">County</span>
             <input type="text"
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              class="form-control"
               v-model="client.address.county" />
           </label>
         </div>
         <!-- Zip code input field -->
         <div class="flex flex-col">
           <label class="block">
-            <span class="text-gray-700">Zip Code</span>
+            <span class="form-label">Zip Code</span>
             <input type="text"
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              class="form-control"
               v-model="client.address.zip" />
           </label>
         </div>
@@ -153,55 +153,55 @@
       </div>
 
       <!-- grid container -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10">
-        <div class="flex justify-between mt-10 mr-20"></div>
+      <div class="form-grid">
+        <div class="flex items-end"></div>
         <!--Update Client submit button-->
-        <div class="flex justify-between mt-10 mr-20">
-          <button @click="submitUpdateClient" type="button" class="bg-green-700 disabled:opacity-50 text-white rounded"
+        <div class="flex items-end">
+          <button @click="submitUpdateClient" type="button" class="btn btn-success"
             :disabled="!user.isEditor || saving">
             Update Client
           </button>
         </div>
         <!--Delete Client button-->
-        <div class="flex justify-between mt-10 mr-20">
-          <button @click="submitDeleteClient" type="button" class="bg-red-700 disabled:opacity-50 text-white rounded"
+        <div class="flex items-end">
+          <button @click="submitDeleteClient" type="button" class="btn btn-danger"
             :disabled="!user.isEditor">
             Delete Client
           </button>
         </div>
         <!--Go back button-->
-        <div class="flex justify-between mt-10 mr-20">
-          <button type="reset" class="border border-red-700 bg-white text-red-700 rounded" @click="router.back()">
+        <div class="flex items-end">
+          <button type="reset" class="btn btn-secondary" @click="router.back()">
             Go back
           </button>
         </div>
       </div>
     </div>
 
-    <hr class="mt-10 mb-10" />
+    <div class="mt-10"></div>
 
     <!-- Client Event Information -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10 mr-10">
-      <div class="ml-10">
-        <h2 class="text-2xl font-bold">Events for Client</h2>
-        <h3 class="italic">Click table row to view event details</h3>
+    <div class="form-grid">
+      <div>
+        <h2 class="section-title">Events for Client</h2>
+        <p class="section-hint">Click table row to view event details</p>
       </div>
-      <div class="flex flex-col col-span-2">
-        <table class="min-w-full shadow-md rounded">
-          <thead class="bg-gray-50 text-xl">
+      <div class="card overflow-x-auto sm:col-span-2 md:col-span-3">
+        <table class="simple-table">
+          <thead>
             <tr>
-              <th class="p-4 text-left">Event Name</th>
-              <th class="p-4 text-left">Date</th>
-              <th class="p-4"></th>
+              <th scope="col">Event Name</th>
+              <th scope="col">Date</th>
+              <th scope="col"><span class="sr-only">Actions</span></th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-300">
+          <tbody>
             <tr @click="openEvent(event._id)" @keyup.enter="openEvent(event._id)" tabindex="0"
               v-for="event in clientEvents" :key="event._id" class="cursor-pointer"
               :class="{ 'hoverRow': hoverId === event._id }" @mouseenter="hoverId = event._id" @mouseleave="hoverId = null">
-              <td class="p-2 text-left">{{ event.name }}</td>
-              <td class="p-2 text-left">{{ formatDate(event.date) }}</td>
-              <td class="p-2 text-right">
+              <td>{{ event.name }}</td>
+              <td>{{ formatDate(event.date) }}</td>
+              <td class="text-right">
                 <span class="remove-btn-wrapper">
                   <!-- Remove "X": editors only (it had no role check before) -->
                   <button type="button" class="remove-btn text-gray-400 cursor-pointer"
@@ -217,15 +217,16 @@
         </table>
       </div>
 
-      <div class="flex flex-col">
-        <!--MultiSelect to add client to events-->
-        <VueMultiselect
-          class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 cursor-pointer"
+      <!--MultiSelect to add client to events (editors only can submit)-->
+      <div class="flex flex-col gap-2 sm:col-span-2 md:col-span-3 md:col-start-2">
+        <label class="form-label" for="add-events">Add this client to events</label>
+        <VueMultiselect id="add-events"
+          class="w-full cursor-pointer"
           v-model="eventsSelected" :options="eventsFiltered" :custom-label="nameWithDate" :multiple="true"
           :close-on-select="true" placeholder="Select Events to be added" label="date" track-by="name" />
-        <div class="flex justify-between">
+        <div class="flex">
           <!--button to add client to events-->
-          <button @click="addClientToEvent" type="button" class="mt-5 bg-red-700 disabled:opacity-50 text-white rounded"
+          <button @click="addClientToEvent" type="button" class="btn btn-primary mt-1"
             :disabled="eventsSelected.length === 0 || !user.isEditor">
             Add Client to Selected Events
           </button>
@@ -233,7 +234,7 @@
       </div>
 
     </div>
-  </main>
+  </div>
 </template>
 
 <script setup>
@@ -255,7 +256,8 @@
 //   - Role checks were a denylist (role === 'viewer'). They now use the store's
 //     isEditor allowlist, and the "X" that removes a client from an event,
 //     which had no role check at all, only shows for editors.
-//   - Delete now asks for confirmation before calling the API.
+//   - Delete (and removing the client from an event) now asks for confirmation
+//     in the app's ConfirmDialog before calling the API.
 //   - Error toasts used to receive objects ([object Object]) or pass the error
 //     as the options argument; they now show err.message from the interceptor.
 //   - Registering for several events reports which ones failed instead of
@@ -270,6 +272,7 @@ import useVuelidate from '@vuelidate/core'
 import { required, email, numeric, minLength, maxLength } from '@vuelidate/validators'
 import VueMultiselect from 'vue-multiselect'
 import { useLoggedInUserStore } from '../store/loggedInUser'
+import { useConfirm } from '../composables/useConfirm'
 import {
   getClientById,
   getClientEvents,
@@ -286,6 +289,7 @@ const route = useRoute()
 const router = useRouter()
 const toast = useToast()
 const user = useLoggedInUserStore()
+const confirm = useConfirm() // app-wide dialog, replaces window.confirm()
 
 const clientId = computed(() => route.params.id)
 
@@ -382,6 +386,14 @@ function openEvent(id) {
 
 // remove the client from one event
 async function removeClientFromEvent(eventId) {
+  const event = clientEvents.value.find((e) => e._id === eventId)
+  const confirmed = await confirm({
+    title: 'Remove from event?',
+    message: `The client will be removed from ${event ? event.name : 'this event'}.`,
+    confirmLabel: 'Remove',
+    danger: true
+  })
+  if (!confirmed) return
   try {
     const response = await deregisterAttendee(eventId, clientId.value)
     toast.success(messageOf(response, 'Client removed from event'))
@@ -426,7 +438,13 @@ async function submitUpdateClient() {
 
 async function submitDeleteClient() {
   const fullName = `${client.value.firstName ?? ''} ${client.value.lastName ?? ''}`.trim()
-  if (!window.confirm(`Delete ${fullName || 'this client'}? This cannot be undone.`)) return
+  const confirmed = await confirm({
+    title: 'Delete client?',
+    message: `${fullName || 'This client'} will be permanently removed. This cannot be undone.`,
+    confirmLabel: 'Delete Client',
+    danger: true
+  })
+  if (!confirmed) return
   try {
     const response = await deleteClientById(clientId.value)
     toast.success(messageOf(response, 'Client deleted'))
