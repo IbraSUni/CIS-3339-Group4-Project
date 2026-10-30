@@ -1,84 +1,52 @@
 <!-- This view shows a list of services. Users can search for services and click on a service to be redirected to another component that displays the service's details -->
 <template>
-  <main>
-    <div>
-      <!--Header-->
-      <h1 class="font-bold text-4xl text-red-700 tracking-widest text-center mt-10">
-        Find Services
-      </h1>
-    </div>
-    <div class="px-10 pt-20">
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10">
-        <h2 class="text-2xl font-bold" id="service-search-by">Search Service By</h2>
-        <!-- Displays Service Name or Service Description selection -->
-        <div class="flex flex-col">
-          <select aria-labelledby="service-search-by"
-            class="rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-            v-model="searchBy">
-            <option value="Service Name">Service Name</option>
-            <option value="Service Description">Service Description</option>
-          </select>
-        </div>
-        <!--Displays service name search field-->
-        <div class="flex flex-col" v-if="searchBy === 'Service Name'">
-          <label class="block">
-            <span class="sr-only">Service name</span>
-            <input type="text"
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-              v-model.trim="name" @keyup.enter="handleSubmitForm" placeholder="Enter service name" />
-          </label>
-        </div>
-        <!--Displays service description search field-->
-        <div class="flex flex-col" v-if="searchBy === 'Service Description'">
-          <label class="block">
-            <span class="sr-only">Service description</span>
-            <input type="text"
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-              v-model.trim="description" @keyup.enter="handleSubmitForm" placeholder="Enter service description" />
-          </label>
-        </div>
+  <div class="page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Find Services</h1>
+        <p class="page-subtitle">Search by name or description, then open a service to see which events offer it.</p>
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10">
-        <div></div>
-        <div></div>
-        <!--Clear Search button-->
-        <div class="mt-5 grid-cols-2">
-          <button class="mr-10 border border-red-700 bg-white text-red-700 rounded" @click="clearSearch" type="button">
-            Clear Search
-          </button>
-          <!--Search Service button-->
-          <button class="bg-red-700 text-white rounded" @click="handleSubmitForm" type="button">
-            Search Service
-          </button>
-        </div>
-      </div>
+      <router-link v-if="user.isEditor" to="/serviceform" class="btn btn-primary">
+        <span class="material-icons text-lg" aria-hidden="true">volunteer_activism</span>
+        Create Service
+      </router-link>
     </div>
 
-    <hr class="mt-10 mb-10" />
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10">
-      <div class="ml-10">
-        <h2 class="text-2xl font-bold">List of Services</h2>
-        <h3 class="italic">Click table row to view service details</h3>
-        <p v-if="activeQuery" class="mt-2 text-sm text-gray-600">Showing search results. Use Clear Search to see all services.</p>
+    <SearchBar title="Search Service By" search-label="Search Service" @search="handleSubmitForm" @clear="clearSearch">
+      <div>
+        <label for="service-search-by" class="form-label">Search by</label>
+        <select id="service-search-by" class="form-control" v-model="searchBy">
+          <option disabled value="">Choose a field</option>
+          <option value="Service Name">Service Name</option>
+          <option value="Service Description">Service Description</option>
+        </select>
       </div>
-      <div class="flex flex-col col-span-2 mb-10">
-        <!-- Loading state -->
-        <div v-if="loading" class="p-10 text-center border rounded bg-gray-50" role="status">
-          <p class="text-xl font-bold text-gray-500 animate-pulse">Loading services...</p>
-        </div>
-
-        <!-- Error state with retry -->
-        <div v-else-if="error" class="p-6 text-center border border-red-200 rounded bg-red-50" role="alert">
-          <p class="text-lg font-bold text-red-900">Could not load services</p>
-          <p class="text-red-800 mt-1">{{ error }}</p>
-          <button class="mt-4 bg-red-700 text-white rounded" @click="execute()">Retry</button>
-        </div>
-
-        <!-- Data -->
-        <DataTable v-else :columns="columns" :rows="services" :empty-text="emptyText" @row-click="openService" />
+      <div v-if="searchBy === 'Service Name'" class="sm:col-span-2">
+        <label for="service-name" class="form-label">Service name</label>
+        <input id="service-name" type="text" class="form-control" v-model.trim="name" placeholder="Enter service name" />
       </div>
-    </div>
-  </main>
+      <div v-else-if="searchBy === 'Service Description'" class="sm:col-span-2">
+        <label for="service-description" class="form-label">Description contains</label>
+        <input id="service-description" type="text" class="form-control" v-model.trim="description"
+          placeholder="Enter service description" />
+      </div>
+    </SearchBar>
+
+    <section class="mt-8" aria-labelledby="service-list-title">
+      <div class="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+        <h2 id="service-list-title" class="section-title">List of Services</h2>
+        <p class="text-sm text-zinc-500">
+          {{ activeQuery ? 'Showing search results. Use Clear Search to see all services.' : 'Click a row to view service details.' }}
+        </p>
+      </div>
+
+      <TableSkeleton v-if="loading" :columns="3" label="Loading services" />
+      <StatePanel v-else-if="error" variant="error" title="Could not load services" :message="error">
+        <button type="button" class="btn btn-primary" @click="execute()">Retry</button>
+      </StatePanel>
+      <DataTable v-else :columns="columns" :rows="services" :empty-text="emptyText" @row-click="openService" />
+    </section>
+  </div>
 </template>
 
 <script setup>
@@ -95,10 +63,15 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import DataTable from '../components/DataTable.vue'
+import SearchBar from '../components/SearchBar.vue'
+import TableSkeleton from '../components/TableSkeleton.vue'
+import StatePanel from '../components/StatePanel.vue'
 import { getServices, searchServices } from '../api/api'
 import { useApi } from '../composables/useApi'
+import { useLoggedInUserStore } from '../store/loggedInUser'
 
 const router = useRouter()
+const user = useLoggedInUserStore() // shows the create shortcut to editors only
 
 // was data option: search parameters
 const searchBy = ref('')

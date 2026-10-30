@@ -1,42 +1,35 @@
-
+<!--
+  Reusable search panel for the three list views (Find Client, Find Events,
+  Find Services). Created by Saad; restyled and extended to all three views.
+  - The parent view supplies the search fields through the default slot.
+  - Emits 'search' and 'clear'; the parent runs the actual query.
+  - Pressing Enter in any field submits, because the panel is a real <form>.
+-->
 <template>
-    <section>
-      <!-- Search fields are provided by the parent view -->
-      <div class="px-10 pt-20">
+  <form class="card card-body" role="search" :aria-label="title" @submit.prevent="emit('search')">
+    <h2 class="section-title">{{ title }}</h2>
+    <div class="mt-4 flex flex-col gap-4 lg:flex-row lg:items-end">
+      <div class="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-3">
         <slot />
       </div>
-  
-      <!-- Reusable search action buttons -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10">
-        <div></div>
-        <div></div>
-  
-        <div class="mt-5 grid-cols-2">
-          <button
-            class="mr-10 border border-red-700 bg-white text-red-700 rounded"
-            @click="emit('clear')"
-            type="button"
-          >
-            Clear Search
-          </button>
-  
-          <button
-            class="bg-red-700 text-white rounded"
-            @click="emit('search')"
-            type="button"
-          >
-            Search
-          </button>
-        </div>
+      <div class="flex gap-3">
+        <button type="button" class="btn btn-secondary" @click="emit('clear')">Clear Search</button>
+        <button type="submit" class="btn btn-primary">
+          <span class="material-icons text-lg" aria-hidden="true">search</span>
+          {{ searchLabel }}
+        </button>
       </div>
-    </section>
-  </template>
-  
-  <script setup>
-  // Composition API:
-  // defineEmits() replaces the Options API emits configuration.
-  // The parent component handles the actual search and clear operations.
-  
-  const emit = defineEmits(['search', 'clear'])
-  </script>
-  
+    </div>
+  </form>
+</template>
+
+<script setup>
+// Composition API: defineProps() and defineEmits() replace the Options API
+// props/emits configuration. The parent handles the search and clear logic.
+defineProps({
+  title: { type: String, default: 'Search' },
+  searchLabel: { type: String, default: 'Search' }
+})
+
+const emit = defineEmits(['search', 'clear'])
+</script>

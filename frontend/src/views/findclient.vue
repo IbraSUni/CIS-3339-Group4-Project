@@ -1,90 +1,61 @@
 <!-- This view displays a list of clients. The user can search for clients, and click on a client to redirect to another component to view that client's information -->
 <template>
-  <main>
-    <div>
-      <!--Header-->
-      <h1 class="font-bold text-4xl text-red-700 tracking-widest text-center mt-10">
-        Find Client
-      </h1>
+  <div class="page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Find Client</h1>
+        <p class="page-subtitle">Search by name or phone number, then open a client to see their details and events.</p>
+      </div>
+      <router-link v-if="user.isEditor" to="/clientform" class="btn btn-primary">
+        <span class="material-icons text-lg" aria-hidden="true">person_add</span>
+        Add Client
+      </router-link>
     </div>
 
-    <SearchBar @search="handleSubmitForm" @clear="clearSearch">
-  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10">
+    <SearchBar title="Search Client By" search-label="Search Client" @search="handleSubmitForm" @clear="clearSearch">
+      <div>
+        <label for="client-search-by" class="form-label">Search by</label>
+        <select id="client-search-by" class="form-control" v-model="searchBy">
+          <option disabled value="">Choose a field</option>
+          <option value="Client Name">Client Name</option>
+          <option value="Client Number">Client Number</option>
+        </select>
+      </div>
+      <template v-if="searchBy === 'Client Name'">
+        <div>
+          <label for="client-first-name" class="form-label">First name</label>
+          <input id="client-first-name" type="text" class="form-control" v-model.trim="firstName"
+            placeholder="Enter first name" />
+        </div>
+        <div>
+          <label for="client-last-name" class="form-label">Last name</label>
+          <input id="client-last-name" type="text" class="form-control" v-model.trim="lastName"
+            placeholder="Enter last name" />
+        </div>
+      </template>
+      <div v-else-if="searchBy === 'Client Number'">
+        <label for="client-phone" class="form-label">Phone number</label>
+        <input id="client-phone" type="text" inputmode="numeric" class="form-control" v-model.trim="phoneNumber"
+          placeholder="Enter Client Phone Number" />
+      </div>
+    </SearchBar>
 
-    <h2 class="text-2xl font-bold" id="client-search-by">
-      Search Client By
-    </h2>
+    <section class="mt-8" aria-labelledby="client-list-title">
+      <div class="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+        <h2 id="client-list-title" class="section-title">List of Clients</h2>
+        <p class="text-sm text-zinc-500">
+          {{ activeQuery ? 'Showing search results. Use Clear Search to see all clients.' : 'Click a row to view client details.' }}
+        </p>
+      </div>
 
-    <div class="flex flex-col">
-      <select
-        aria-labelledby="client-search-by"
-        class="rounded-md border-gray-300 shadow-sm"
-        v-model="searchBy"
-      >
-        <option value="Client Name">Client Name</option>
-        <option value="Client Number">Client Number</option>
-      </select>
-    </div>
-
-    <div v-if="searchBy === 'Client Name'">
-      <input
-        type="text"
-        class="w-full rounded-md border-gray-300 shadow-sm"
-        v-model.trim="firstName"
-        @keyup.enter="handleSubmitForm"
-        placeholder="Enter first name"
-      />
-    </div>
-
-    <div v-if="searchBy === 'Client Name'">
-      <input
-        type="text"
-        class="w-full rounded-md border-gray-300 shadow-sm"
-        v-model.trim="lastName"
-        @keyup.enter="handleSubmitForm"
-        placeholder="Enter last name"
-      />
-    </div>
-
-    <div v-if="searchBy === 'Client Number'">
-      <input
-        type="text"
-        class="w-full rounded-md border-gray-300 shadow-sm"
-        v-model.trim="phoneNumber"
-        @keyup.enter="handleSubmitForm"
-        placeholder="Enter Client Phone Number"
-      />
-    </div>
-
+      <!-- Loading, error (with retry), then data. DataTable shows its own empty row. -->
+      <TableSkeleton v-if="loading" :columns="3" label="Loading clients" />
+      <StatePanel v-else-if="error" variant="error" title="Could not load clients" :message="error">
+        <button type="button" class="btn btn-primary" @click="execute()">Retry</button>
+      </StatePanel>
+      <DataTable v-else :columns="columns" :rows="clients" :empty-text="emptyText" @row-click="openClient" />
+    </section>
   </div>
-</SearchBar>
-
-
-    <hr class="mt-10 mb-10" />
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10">
-      <div class="ml-10">
-        <h2 class="text-2xl font-bold">List of Clients</h2>
-        <h3 class="italic">Click table row to view client details</h3>
-        <p v-if="activeQuery" class="mt-2 text-sm text-gray-600">Showing search results. Use Clear Search to see all clients.</p>
-      </div>
-      <div class="flex flex-col col-span-2 mb-10">
-        <!-- Loading state -->
-        <div v-if="loading" class="p-10 text-center border rounded bg-gray-50" role="status">
-          <p class="text-xl font-bold text-gray-500 animate-pulse">Loading clients...</p>
-        </div>
-
-        <!-- Error state with retry -->
-        <div v-else-if="error" class="p-6 text-center border border-red-200 rounded bg-red-50" role="alert">
-          <p class="text-lg font-bold text-red-900">Could not load clients</p>
-          <p class="text-red-800 mt-1">{{ error }}</p>
-          <button class="mt-4 bg-red-700 text-white rounded" @click="execute()">Retry</button>
-        </div>
-
-        <!-- Data (DataTable shows its own "No results" row when empty) -->
-        <DataTable v-else :columns="columns" :rows="clients" :empty-text="emptyText" @row-click="openClient" />
-      </div>
-    </div>
-  </main>
 </template>
 
 <script setup>
@@ -107,11 +78,15 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import DataTable from '../components/DataTable.vue'
+import TableSkeleton from '../components/TableSkeleton.vue'
+import StatePanel from '../components/StatePanel.vue'
 import SearchBar from '../components/SearchBar.vue'
 import { getClients, searchClients } from '../api/api'
 import { useApi } from '../composables/useApi'
+import { useLoggedInUserStore } from '../store/loggedInUser'
 
 const router = useRouter()
+const user = useLoggedInUserStore() // shows the create shortcut to editors only
 
 // was data option: search parameters
 const searchBy = ref('')

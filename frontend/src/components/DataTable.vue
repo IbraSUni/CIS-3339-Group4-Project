@@ -19,47 +19,62 @@
   to page 1 so rows from the previous result can never stay on screen.
 -->
 <template>
-  <div>
-    <table class="min-w-full shadow-md rounded">
-      <thead class="bg-gray-50 text-xl">
-        <tr>
-          <th v-for="column in columns" :key="column.field" class="p-4 text-left"
-            :aria-sort="ariaSort(column.field)">
-            <button type="button" class="sort-button" @click="toggleSort(column.field)"
-              :title="`Sort by ${column.label}`">
-              {{ column.label }}
-              <span class="sort-indicator" aria-hidden="true">{{ sortIcon(column.field) }}</span>
-            </button>
-          </th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-300">
-        <tr v-for="row in pageRows" :key="row[rowKey]" class="cursor-pointer hover:bg-red-50 focus:bg-red-50 outline-none"
-          tabindex="0" @click="emit('row-click', row)" @keyup.enter="emit('row-click', row)">
-          <td v-for="column in columns" :key="column.field" class="p-2 text-left">
-            {{ displayValue(row, column) }}
-          </td>
-        </tr>
-        <!-- Empty state: one clear row instead of a blank table -->
-        <tr v-if="!rows.length">
-          <td :colspan="columns.length" class="p-6 text-center text-gray-600">{{ emptyText }}</td>
-        </tr>
-      </tbody>
-    </table>
+  <div class="card overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-left text-sm">
+        <thead class="border-b border-zinc-200 bg-zinc-50">
+          <tr>
+            <th v-for="column in columns" :key="column.field" scope="col" class="px-4 py-3"
+              :aria-sort="ariaSort(column.field)">
+              <button type="button" class="sort-button" @click="toggleSort(column.field)"
+                :title="`Sort by ${column.label}`">
+                {{ column.label }}
+                <span class="material-icons sort-indicator" :class="{ 'is-active': sortField === column.field }"
+                  aria-hidden="true">{{ sortIcon(column.field) }}</span>
+              </button>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="row in pageRows" :key="row[rowKey]" class="data-row" tabindex="0"
+            @click="emit('row-click', row)" @keyup.enter="emit('row-click', row)">
+            <td v-for="column in columns" :key="column.field" class="px-4 py-3 text-zinc-800">
+              {{ displayValue(row, column) }}
+            </td>
+          </tr>
+          <!-- Empty state: one clear row instead of a blank table -->
+          <tr v-if="!rows.length">
+            <td :colspan="columns.length" class="px-4 py-12 text-center">
+              <span class="material-icons text-3xl text-zinc-400" aria-hidden="true">search_off</span>
+              <p class="mt-2 font-medium text-zinc-800">{{ emptyText }}</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
     <!-- Pagination -->
-    <div v-if="rows.length" class="flex flex-wrap items-center justify-between gap-4 mt-4">
-      <p class="text-gray-700" aria-live="polite">Showing {{ firstShown }}-{{ lastShown }} of {{ rows.length }}</p>
-      <div class="flex items-center gap-2">
-        <button type="button" class="page-button" :disabled="page === 1" @click="page = 1"
-          aria-label="First page">&laquo;</button>
-        <button type="button" class="page-button" :disabled="page === 1" @click="page--"
-          aria-label="Previous page">&lsaquo; Prev</button>
-        <span class="px-2 text-gray-700">Page {{ page }} of {{ pageCount }}</span>
-        <button type="button" class="page-button" :disabled="page === pageCount" @click="page++"
-          aria-label="Next page">Next &rsaquo;</button>
+    <div v-if="rows.length"
+      class="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-200 bg-zinc-50 px-4 py-3">
+      <p class="text-sm text-zinc-600" aria-live="polite">
+        Showing <span class="font-medium text-zinc-900">{{ firstShown }}-{{ lastShown }}</span> of
+        <span class="font-medium text-zinc-900">{{ rows.length }}</span>
+      </p>
+      <div class="flex items-center gap-1">
+        <button type="button" class="page-button" :disabled="page === 1" @click="page = 1" aria-label="First page">
+          <span class="material-icons" aria-hidden="true">first_page</span>
+        </button>
+        <button type="button" class="page-button" :disabled="page === 1" @click="page--" aria-label="Previous page">
+          <span class="material-icons" aria-hidden="true">chevron_left</span>
+        </button>
+        <span class="px-2 text-sm text-zinc-700">Page {{ page }} of {{ pageCount }}</span>
+        <button type="button" class="page-button" :disabled="page === pageCount" @click="page++" aria-label="Next page">
+          <span class="material-icons" aria-hidden="true">chevron_right</span>
+        </button>
         <button type="button" class="page-button" :disabled="page === pageCount" @click="page = pageCount"
-          aria-label="Last page">&raquo;</button>
+          aria-label="Last page">
+          <span class="material-icons" aria-hidden="true">last_page</span>
+        </button>
       </div>
     </div>
   </div>
@@ -112,9 +127,10 @@ function toggleSort(field) {
   page.value = 1
 }
 
+// Material Icons names for the header indicator
 function sortIcon(field) {
-  if (sortField.value !== field) return '↕'
-  return sortDirection.value === 'asc' ? '▲' : '▼'
+  if (sortField.value !== field) return 'unfold_more'
+  return sortDirection.value === 'asc' ? 'arrow_upward' : 'arrow_downward'
 }
 
 function ariaSort(field) {
@@ -165,31 +181,22 @@ watch(pageCount, (count) => {
 
 <style scoped>
 .sort-button {
-  padding: 0;
-  background: none;
-  border: 0;
-  font: inherit;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
+  @apply inline-flex items-center gap-1 rounded text-xs font-semibold uppercase tracking-wide text-zinc-600 hover:text-zinc-900;
 }
 
 .sort-indicator {
-  font-size: 0.75em;
-  color: #9ca3af;
+  @apply text-base text-zinc-400;
+}
+
+.sort-indicator.is-active {
+  @apply text-brand-600;
+}
+
+.data-row {
+  @apply cursor-pointer border-t border-zinc-100 transition-colors first:border-t-0 hover:bg-brand-50 focus:bg-brand-50;
 }
 
 .page-button {
-  padding: 4px 10px;
-  border: 1px solid #b91c1c;
-  border-radius: 4px;
-  color: #b91c1c;
-  background: white;
-}
-
-.page-button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+  @apply inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-700 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent;
 }
 </style>

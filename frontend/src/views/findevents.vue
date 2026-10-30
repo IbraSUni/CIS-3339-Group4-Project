@@ -1,85 +1,51 @@
 <!-- This view displays a list of events. Users can search for events, and click on an event to be redirected to another component to view that event's details -->
 <template>
-  <main>
-    <div>
-      <!--Header-->
-      <h1 class="font-bold text-4xl text-red-700 tracking-widest text-center mt-10">
-        List of Events
-      </h1>
-    </div>
-    <div class="px-10 pt-20">
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10">
-        <h2 class="text-2xl font-bold" id="event-search-by">Search Event By</h2>
-        <!-- Displays Event Name or Event Date selection -->
-        <div class="flex flex-col">
-          <select aria-labelledby="event-search-by"
-            class="rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-            v-model="searchBy">
-            <option value="Event Name">Event Name</option>
-            <option value="Event Date">Event Date</option>
-          </select>
-        </div>
-        <!--Displays event name search field-->
-        <div class="flex flex-col" v-if="searchBy === 'Event Name'">
-          <label class="block">
-            <span class="sr-only">Event name</span>
-            <input type="text"
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-              v-model.trim="name" @keyup.enter="handleSubmitForm" placeholder="Enter event name" />
-          </label>
-        </div>
-        <!-- Displays event date search field -->
-        <div class="flex flex-col" v-if="searchBy === 'Event Date'">
-          <label class="block">
-            <span class="sr-only">Event date</span>
-            <input
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-              type="date" v-model="eventDate" @keyup.enter="handleSubmitForm" />
-          </label>
-        </div>
+  <div class="page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">List of Events</h1>
+        <p class="page-subtitle">Search by name or date, then open an event to see its services and attendees.</p>
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10">
-        <div></div>
-        <div></div>
-        <!--Clear Search button-->
-        <div class="mt-5 grid-cols-2">
-          <button class="mr-10 border border-red-700 bg-white text-red-700 rounded" @click="clearSearch" type="button">
-            Clear Search
-          </button>
-          <!--Search Event button-->
-          <button class="bg-red-700 text-white rounded" @click="handleSubmitForm" type="button">
-            Search Event
-          </button>
-        </div>
-      </div>
+      <router-link v-if="user.isEditor" to="/eventform" class="btn btn-primary">
+        <span class="material-icons text-lg" aria-hidden="true">event</span>
+        Create Event
+      </router-link>
     </div>
 
-    <hr class="mt-10 mb-10" />
-    <!-- Display Found Data -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10">
-      <div class="ml-10">
-        <h2 class="text-2xl font-bold">List of Events</h2>
-        <h3 class="italic">Click table row to view event details</h3>
-        <p v-if="activeQuery" class="mt-2 text-sm text-gray-600">Showing search results. Use Clear Search to see all events.</p>
+    <SearchBar title="Search Event By" search-label="Search Event" @search="handleSubmitForm" @clear="clearSearch">
+      <div>
+        <label for="event-search-by" class="form-label">Search by</label>
+        <select id="event-search-by" class="form-control" v-model="searchBy">
+          <option disabled value="">Choose a field</option>
+          <option value="Event Name">Event Name</option>
+          <option value="Event Date">Event Date</option>
+        </select>
       </div>
-      <div class="flex flex-col col-span-2 mb-10">
-        <!-- Loading state -->
-        <div v-if="loading" class="p-10 text-center border rounded bg-gray-50" role="status">
-          <p class="text-xl font-bold text-gray-500 animate-pulse">Loading events...</p>
-        </div>
-
-        <!-- Error state with retry -->
-        <div v-else-if="error" class="p-6 text-center border border-red-200 rounded bg-red-50" role="alert">
-          <p class="text-lg font-bold text-red-900">Could not load events</p>
-          <p class="text-red-800 mt-1">{{ error }}</p>
-          <button class="mt-4 bg-red-700 text-white rounded" @click="execute()">Retry</button>
-        </div>
-
-        <!-- Data -->
-        <DataTable v-else :columns="columns" :rows="events" :empty-text="emptyText" @row-click="openEvent" />
+      <div v-if="searchBy === 'Event Name'" class="sm:col-span-2">
+        <label for="event-name" class="form-label">Event name</label>
+        <input id="event-name" type="text" class="form-control" v-model.trim="name" placeholder="Enter event name" />
       </div>
-    </div>
-  </main>
+      <div v-else-if="searchBy === 'Event Date'">
+        <label for="event-date" class="form-label">Event date</label>
+        <input id="event-date" type="date" class="form-control" v-model="eventDate" />
+      </div>
+    </SearchBar>
+
+    <section class="mt-8" aria-labelledby="event-list-title">
+      <div class="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+        <h2 id="event-list-title" class="section-title">List of Events</h2>
+        <p class="text-sm text-zinc-500">
+          {{ activeQuery ? 'Showing search results. Use Clear Search to see all events.' : 'Click a row to view event details.' }}
+        </p>
+      </div>
+
+      <TableSkeleton v-if="loading" :columns="3" label="Loading events" />
+      <StatePanel v-else-if="error" variant="error" title="Could not load events" :message="error">
+        <button type="button" class="btn btn-primary" @click="execute()">Retry</button>
+      </StatePanel>
+      <DataTable v-else :columns="columns" :rows="events" :empty-text="emptyText" @row-click="openEvent" />
+    </section>
+  </div>
 </template>
 
 <script setup>
@@ -93,18 +59,23 @@
 //   - formatDate method      -> shared utils/formatDate.js (used by the Date column)
 //   - <table> + hoverId      -> <DataTable>
 // Bugs removed during the migration:
-//   - loadData() set this.isLoading, which was never declared in data option: 
+//   - loadData() set this.isLoading, which was never declared in the data option.
 //   - toast.error('Error searching events', error) passed the error as the
 //     toast OPTIONS argument, so the actual message was silently dropped.
 // ---------------------------------------------------------------------------
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import DataTable from '../components/DataTable.vue'
+import SearchBar from '../components/SearchBar.vue'
+import TableSkeleton from '../components/TableSkeleton.vue'
+import StatePanel from '../components/StatePanel.vue'
 import { getEvents, searchEvents } from '../api/api'
 import { useApi } from '../composables/useApi'
+import { useLoggedInUserStore } from '../store/loggedInUser'
 import { formatDate, toDateInputValue } from '../utils/formatDate'
 
 const router = useRouter()
+const user = useLoggedInUserStore() // shows the create shortcut to editors only
 
 // was data option: search parameters
 const searchBy = ref('')
