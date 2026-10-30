@@ -13,7 +13,7 @@
 import axios from 'axios'
 
 // The API base URL comes only from VITE_ROOT_API (see frontend/.env). There is
-// no hard-coded localhost anywhere in src/.
+// no hard-coded API host anywhere in src/.
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_ROOT_API,
   headers: {
