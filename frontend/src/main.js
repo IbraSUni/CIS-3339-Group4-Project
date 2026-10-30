@@ -2,6 +2,9 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import Toast, { useToast } from 'vue-toastification'
 import 'vue-toastification/dist/index.css'
+// Icons are bundled from the material-icons package instead of loaded from
+// Google Fonts, so they work offline and on networks that block font CDNs.
+import 'material-icons/iconfont/filled.css'
 import App from './App.vue'
 import router from './router'
 import { useLoggedInUserStore } from './store/loggedInUser'

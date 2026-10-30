@@ -2,12 +2,175 @@
 @tailwind components;
 @tailwind utilities;
 
-button {
-  padding: 10px;
+/*
+  App-wide design tokens and component classes.
+  - One accent color (brand red, UH red), neutrals from the zinc scale.
+  - One corner radius for controls and cards (rounded-lg), pills only for badges.
+  - Every interactive element has a visible keyboard focus ring.
+*/
+
+@layer base {
+  html {
+    @apply bg-zinc-50 text-zinc-900 antialiased;
+  }
+
+  body {
+    @apply min-h-screen;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-500 ring-offset-2;
+  }
 }
 
-/* color in row in tables for selction*/
+@layer components {
+  /* ---------- page structure ---------- */
+  .page {
+    @apply mx-auto w-full max-w-6xl px-4 py-8 md:px-8;
+  }
+
+  .page-title {
+    @apply text-2xl font-semibold tracking-tight text-zinc-900 md:text-3xl;
+  }
+
+  .page-subtitle {
+    @apply mt-1 text-sm text-zinc-600;
+  }
+
+  .page-header {
+    @apply mb-6 flex flex-wrap items-end justify-between gap-4;
+  }
+
+  .section-title {
+    @apply text-lg font-semibold text-zinc-900;
+  }
+
+  .section-hint {
+    @apply mt-1 text-sm text-zinc-500;
+  }
+
+  .card {
+    @apply rounded-lg border border-zinc-200 bg-white shadow-card;
+  }
+
+  .card-body {
+    @apply p-5 md:p-6;
+  }
+
+  /* Form sections: heading in the first column, fields in the rest. */
+  .form-grid {
+    @apply grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2 md:grid-cols-4;
+  }
+
+  .form-section + .form-section {
+    @apply mt-8 border-t border-zinc-100 pt-8;
+  }
+
+  /* ---------- buttons ---------- */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition
+      active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 disabled:active:translate-y-0;
+  }
+
+  .btn-primary {
+    @apply bg-brand-600 text-white hover:bg-brand-700;
+  }
+
+  .btn-secondary {
+    @apply border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50;
+  }
+
+  .btn-danger {
+    @apply border border-brand-200 bg-white text-brand-700 hover:bg-brand-50;
+  }
+
+  .btn-danger-solid {
+    @apply bg-brand-700 text-white hover:bg-brand-800;
+  }
+
+  .btn-success {
+    @apply bg-emerald-700 text-white hover:bg-emerald-800;
+  }
+
+  .btn-ghost {
+    @apply text-zinc-700 hover:bg-zinc-100;
+  }
+
+  /* ---------- forms ---------- */
+  .form-label {
+    @apply mb-1 inline-block text-sm font-medium text-zinc-700;
+  }
+
+  .required-mark {
+    @apply ml-0.5 text-brand-600;
+  }
+
+  .form-control {
+    @apply block w-full rounded-lg border-zinc-300 text-sm text-zinc-900 shadow-sm placeholder:text-zinc-500
+      focus:border-brand-500 focus:ring-brand-500 disabled:bg-zinc-100;
+  }
+
+  .field-error {
+    @apply mt-1 block text-sm text-brand-700;
+  }
+
+  .form-check {
+    @apply rounded border-zinc-300 text-brand-600 focus:ring-brand-500;
+  }
+
+  /* ---------- tables (detail pages; list pages use DataTable) ---------- */
+  .simple-table {
+    @apply min-w-full text-left text-sm;
+  }
+
+  .simple-table thead {
+    @apply bg-zinc-50 text-xs font-semibold uppercase tracking-wide text-zinc-600;
+  }
+
+  .simple-table th {
+    @apply px-4 py-3;
+  }
+
+  .simple-table td {
+    @apply px-4 py-3 text-zinc-800;
+  }
+
+  .simple-table tbody tr {
+    @apply border-t border-zinc-100;
+  }
+
+  .simple-table tbody tr[tabindex] {
+    @apply cursor-pointer hover:bg-brand-50 focus:bg-brand-50;
+  }
+
+  /* ---------- badges ---------- */
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  .badge-active {
+    @apply bg-emerald-50 text-emerald-800;
+  }
+
+  .badge-inactive {
+    @apply bg-zinc-100 text-zinc-700;
+  }
+
+  .badge-role {
+    @apply bg-white/15 text-white;
+  }
+}
+
+/* Row highlight used by the detail-page tables (hover state set in JS). */
 .hoverRow {
-  background-color: rgba(255, 0, 0, 0.1);
-  transition: background-color 0.3s ease-in-out;
+  @apply bg-brand-50;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }
