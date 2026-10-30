@@ -1,28 +1,28 @@
 <!-- This view allows a user to create client information. -->
 <template>
-  <main>
+  <div class="page">
     <!--Header-->
-    <h1 class="font-bold text-4xl text-red-700 tracking-widest text-center mt-10">
+    <h1 class="page-title">
       Client Intake Form
     </h1>
-    <div class="px-10 py-20">
+    <div class="card card-body mt-6">
       <!-- form field -->
       <!-- @submit.prevent stops the submit event from reloading the page-->
       <form @submit.prevent="submitForm">
         <!-- grid container -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10">
-          <h2 class="text-2xl font-bold">Personal Details</h2>
+        <div class="form-grid">
+          <h2 class="section-title">Personal Details</h2>
           <!--First Name Input Field-->
           <div class="flex flex-col">
             <label class="block">
-              <span class="text-gray-700">First Name</span>
-              <span style="color: #ff0000">*</span>
+              <span class="form-label">First Name</span>
+              <span class="required-mark" aria-hidden="true">*</span>
               <input type="text"
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                class="form-control"
                 v-model="client.firstName" />
             </label>
             <!-- Validation error messages -->
-            <span v-if="v$.client.firstName.$error" class="text-red-500">
+            <span v-if="v$.client.firstName.$error" class="field-error">
               First Name is required
             </span>
           </div>
@@ -30,9 +30,9 @@
           <!--Middle Name Input Field-->
           <div class="flex flex-col">
             <label class="block">
-              <span class="text-gray-700">Middle Name</span>
+              <span class="form-label">Middle Name</span>
               <input type="text"
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                class="form-control"
                 placeholder v-model="client.middleName" />
             </label>
           </div>
@@ -40,14 +40,14 @@
           <!--Last Name Input Field-->
           <div class="flex flex-col">
             <label class="block">
-              <span class="text-gray-700">Last Name</span>
-              <span style="color: #ff0000">*</span>
+              <span class="form-label">Last Name</span>
+              <span class="required-mark" aria-hidden="true">*</span>
               <input type="text"
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                class="form-control"
                 placeholder v-model="client.lastName" />
             </label>
             <!-- Validation error messages -->
-            <span v-if="v$.client.lastName.$error" class="text-red-500">
+            <span v-if="v$.client.lastName.$error" class="field-error">
               Last Name is required
             </span>
           </div>
@@ -56,28 +56,28 @@
           <!--Email Input Field-->
           <div class="flex flex-col">
             <label class="block">
-              <span class="text-gray-700">Email</span>
-              <span style="color: #ff0000">*</span>
+              <span class="form-label">Email</span>
+              <span class="required-mark" aria-hidden="true">*</span>
               <input type="email"
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                class="form-control"
                 v-model="client.email" />
             </label>
             <!-- Validation error messages -->
-            <span v-if="v$.client.email.$error" class="text-red-500">
+            <span v-if="v$.client.email.$error" class="field-error">
               Valid Email is required
             </span>
           </div>
           <!-- Phone Number Input Field -->
           <div class="flex flex-col">
             <label class="block">
-              <span class="text-gray-700">Phone Number</span>
-              <span style="color: #ff0000">*</span>
+              <span class="form-label">Phone Number</span>
+              <span class="required-mark" aria-hidden="true">*</span>
               <input type="text"
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                class="form-control"
                 pattern="[0-9]{3}[0-9]{3}[0-9]{4}" v-model="client.phoneNumber.primary" />
             </label>
             <!-- Validation error messages -->
-            <span v-if="v$.client.phoneNumber.primary.$error" class="text-red-500">
+            <span v-if="v$.client.phoneNumber.primary.$error" class="field-error">
               <span v-if="v$.client.phoneNumber.primary.required.$invalid">
                 Phone Number is required
               </span>
@@ -95,23 +95,23 @@
           <!-- Alternative Phone Number Input Field -->
           <div class="flex flex-col">
             <label class="block">
-              <span class="text-gray-700">Alternative Phone Number</span>
+              <span class="form-label">Alternative Phone Number</span>
               <input type="text"
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                class="form-control"
                 pattern="[0-9]{3}[0-9]{3}[0-9]{4}" v-model="client.phoneNumber.alternate" />
             </label>
           </div>
         </div>
 
         <!-- grid container -->
-        <div class="mt-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10">
-          <h2 class="text-2xl font-bold">Address Details</h2>
+        <div class="form-grid mt-8 border-t border-zinc-100 pt-8">
+          <h2 class="section-title">Address Details</h2>
           <!-- Address 1 Input Field -->
           <div class="flex flex-col">
             <label class="block">
-              <span class="text-gray-700">Address Line 1</span>
+              <span class="form-label">Address Line 1</span>
               <input type="text"
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                class="form-control"
                 v-model="client.address.line1" />
             </label>
           </div>
@@ -119,9 +119,9 @@
           <!-- Address 2 Input Field -->
           <div class="flex flex-col">
             <label class="block">
-              <span class="text-gray-700">Address Line 2</span>
+              <span class="form-label">Address Line 2</span>
               <input type="text"
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                class="form-control"
                 v-model="client.address.line2" />
             </label>
           </div>
@@ -129,14 +129,14 @@
           <!-- City Input Field -->
           <div class="flex flex-col">
             <label class="block">
-              <span class="text-gray-700">City</span>
-              <span style="color: #ff0000">*</span>
+              <span class="form-label">City</span>
+              <span class="required-mark" aria-hidden="true">*</span>
               <input type="text"
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                class="form-control"
                 v-model="client.address.city" />
             </label>
             <!-- Validation error messages -->
-            <span v-if="v$.client.address.city.$error" class="text-red-500">
+            <span v-if="v$.client.address.city.$error" class="field-error">
               City is required
             </span>
           </div>
@@ -145,9 +145,9 @@
           <!-- County Input Field -->
           <div class="flex flex-col">
             <label class="block">
-              <span class="text-gray-700">County</span>
+              <span class="form-label">County</span>
               <input type="text"
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                class="form-control"
                 v-model="client.address.county" />
             </label>
           </div>
@@ -155,24 +155,24 @@
           <!-- Zip Code Input Field -->
           <div class="flex flex-col">
             <label class="block">
-              <span class="text-gray-700">Zip Code</span>
+              <span class="form-label">Zip Code</span>
               <input type="text"
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                class="form-control"
                 v-model="client.address.zip" />
             </label>
           </div>
           <div></div>
 
           <!-- Add Client Submit Button -->
-          <div class="flex justify-between mt-10 mr-20">
-            <button class="bg-red-700 text-white rounded disabled:opacity-50" type="submit" :disabled="submitting">
+          <div class="flex items-end">
+            <button class="btn btn-primary" type="submit" :disabled="submitting">
               Add Client
             </button>
           </div>
         </div>
       </form>
     </div>
-  </main>
+  </div>
 </template>
 
 <script setup>

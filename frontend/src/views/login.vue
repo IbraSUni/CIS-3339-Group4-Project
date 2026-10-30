@@ -1,36 +1,29 @@
 <!-- This is the login view. Users can login by entering a correct username and password -->
 <template>
-  <div>
-    <!--Header-->
-    <h1 class="font-bold text-4xl text-red-700 tracking-widest text-center mt-10">Welcome</h1>
-    <!--Form-->
-    <form @submit.prevent="handleLogin" novalidate="true">
-      <div class="flex justify-center mt-10">
-        <label>
-          <span class="text-gray-700">Username</span>
-          <span style="color: #ff0000">*</span>
-          <input type="text" autocomplete="username"
-            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-            v-model.trim="username" />
-        </label>
+  <div class="flex min-h-[calc(100dvh-4rem)] items-center justify-center px-4 py-12">
+    <div class="w-full max-w-sm">
+      <div class="mb-8 text-center">
+        <img class="mx-auto h-16 w-16 rounded-full bg-brand-50" src="@/assets/DanPersona.svg" alt="" />
+        <h1 class="mt-4 text-2xl font-semibold tracking-tight text-zinc-900">Welcome</h1>
+        <p class="mt-1 text-sm text-zinc-600">Sign in to manage clients, events and services.</p>
       </div>
-      <div class="flex justify-center mt-10">
-        <label>
-          <span class="text-gray-700">Password</span>
-          <span style="color: #ff0000">*</span>
-          <input type="password" autocomplete="current-password"
-            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-            v-model="password" />
-        </label>
-      </div>
-      <!--Login button-->
-      <div class="flex justify-center mt-10">
-        <button class="bg-red-700 text-white rounded disabled:opacity-50" type="submit"
-          :disabled="submitting || !username || !password">
+
+      <form class="card card-body space-y-5" @submit.prevent="handleLogin" novalidate>
+        <div>
+          <label for="login-username" class="form-label">Username<span class="required-mark" aria-hidden="true">*</span></label>
+          <input id="login-username" type="text" autocomplete="username" class="form-control" v-model.trim="username"
+            required />
+        </div>
+        <div>
+          <label for="login-password" class="form-label">Password<span class="required-mark" aria-hidden="true">*</span></label>
+          <input id="login-password" type="password" autocomplete="current-password" class="form-control"
+            v-model="password" required />
+        </div>
+        <button class="btn btn-primary w-full" type="submit" :disabled="submitting || !username || !password">
           {{ submitting ? 'Logging in...' : 'Login' }}
         </button>
-      </div>
-    </form>
+      </form>
+    </div>
   </div>
 </template>
 
