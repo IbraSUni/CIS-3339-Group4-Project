@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
+    "db:init": "node scripts/initDb.js",
+    "db:reset": "node scripts/initDb.js --reset",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
