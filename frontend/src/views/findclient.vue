@@ -7,62 +7,58 @@
         Find Client
       </h1>
     </div>
-    <div class="px-10 pt-20">
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10">
-        <!--Search Client By selection-->
-        <h2 class="text-2xl font-bold" id="client-search-by">Search Client By</h2>
-        <div class="flex flex-col">
-          <select aria-labelledby="client-search-by"
-            class="rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-            v-model="searchBy">
-            <option value="Client Name">Client Name</option>
-            <option value="Client Number">Client Number</option>
-          </select>
-        </div>
-        <!--Input box for searching by Client First Name-->
-        <div class="flex flex-col" v-if="searchBy === 'Client Name'">
-          <label class="block">
-            <span class="sr-only">First name</span>
-            <input type="text"
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-              v-model.trim="firstName" @keyup.enter="handleSubmitForm" placeholder="Enter first name" />
-          </label>
-        </div>
-        <!--Input box for searching by Client Last Name-->
-        <div class="flex flex-col" v-if="searchBy === 'Client Name'">
-          <label class="block">
-            <span class="sr-only">Last name</span>
-            <input type="text"
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-              v-model.trim="lastName" @keyup.enter="handleSubmitForm" placeholder="Enter last name" />
-          </label>
-        </div>
-        <!-- Displays Client Number search field -->
-        <div class="flex flex-col" v-if="searchBy === 'Client Number'">
-          <label class="block">
-            <span class="sr-only">Phone number</span>
-            <input
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-              type="text" v-model.trim="phoneNumber" @keyup.enter="handleSubmitForm"
-              placeholder="Enter Client Phone Number" />
-          </label>
-        </div>
-      </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10">
-        <div></div>
-        <div></div>
-        <!--Clear Search button-->
-        <div class="mt-5 grid-cols-2">
-          <button class="mr-10 border border-red-700 bg-white text-red-700 rounded" @click="clearSearch" type="button">
-            Clear Search
-          </button>
-          <!--Search Client button-->
-          <button class="bg-red-700 text-white rounded" @click="handleSubmitForm" type="button">
-            Search Client
-          </button>
-        </div>
-      </div>
+
+    <SearchBar @search="handleSubmitForm" @clear="clearSearch">
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10">
+
+    <h2 class="text-2xl font-bold" id="client-search-by">
+      Search Client By
+    </h2>
+
+    <div class="flex flex-col">
+      <select
+        aria-labelledby="client-search-by"
+        class="rounded-md border-gray-300 shadow-sm"
+        v-model="searchBy"
+      >
+        <option value="Client Name">Client Name</option>
+        <option value="Client Number">Client Number</option>
+      </select>
     </div>
+
+    <div v-if="searchBy === 'Client Name'">
+      <input
+        type="text"
+        class="w-full rounded-md border-gray-300 shadow-sm"
+        v-model.trim="firstName"
+        @keyup.enter="handleSubmitForm"
+        placeholder="Enter first name"
+      />
+    </div>
+
+    <div v-if="searchBy === 'Client Name'">
+      <input
+        type="text"
+        class="w-full rounded-md border-gray-300 shadow-sm"
+        v-model.trim="lastName"
+        @keyup.enter="handleSubmitForm"
+        placeholder="Enter last name"
+      />
+    </div>
+
+    <div v-if="searchBy === 'Client Number'">
+      <input
+        type="text"
+        class="w-full rounded-md border-gray-300 shadow-sm"
+        v-model.trim="phoneNumber"
+        @keyup.enter="handleSubmitForm"
+        placeholder="Enter Client Phone Number"
+      />
+    </div>
+
+  </div>
+</SearchBar>
+
 
     <hr class="mt-10 mb-10" />
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10">
@@ -111,6 +107,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import DataTable from '../components/DataTable.vue'
+import SearchBar from '../components/SearchBar.vue'
 import { getClients, searchClients } from '../api/api'
 import { useApi } from '../composables/useApi'
 
