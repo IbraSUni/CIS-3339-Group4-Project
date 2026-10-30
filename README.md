@@ -24,13 +24,18 @@ Follow instructions in frontend README for setup and running as a local instance
 
 ## Quick start (Group 4, Fall 2026)
 
-Prerequisites: Node.js 18+ and a MongoDB database.
+Prerequisites:
+
+- Node.js 18 or newer
+- MongoDB: either [MongoDB Community Server](https://www.mongodb.com/try/download/community) running locally
+  (the committed `backend/.env` points at `mongodb://127.0.0.1:27017/dataplatform`), or a MongoDB Atlas
+  connection string pasted into `MONGO_URL` in `backend/.env`
 
 ```bash
 # backend (terminal 1)
 cd backend
 npm install
-# create backend/.env from backend/.env.example (MONGO_URL, PORT, ORG_ID, JWT_SECRET)
+npm run db:init      # creates the organization, the demo accounts and sample data (safe to re-run)
 npm start            # http://localhost:3000   (npm run dev for auto-reload)
 
 # frontend (terminal 2)
@@ -41,7 +46,19 @@ npm run dev          # http://localhost:5173
 npm run build && npm run serve   # http://localhost:4173
 ```
 
-Demo accounts: `user` / `user` (viewer) and `admin` / `admin` (editor).
+| Role | Username | Password |
+| --- | --- | --- |
+| Viewer | `user` | `user` |
+| Editor | `admin` | `admin` |
+
+`npm run db:reset` deletes this organization's users, clients, events and services first, then seeds again.
+
+## Tests
+
+```bash
+cd frontend
+npm test             # 27 Vitest tests: useApi, the API interceptor, DataTable, session restore, route guard, confirm dialog
+```
 
 ## Sprint 2 status (frontend)
 
@@ -52,7 +69,8 @@ Demo accounts: `user` / `user` (viewer) and `admin` / `admin` (editor).
 | F3 `DataTable` | Done: `src/components/DataTable.vue` used by Find Client, Find Events, Find Services |
 | F4 Session restore + editor guard | Done: `restoreSession()` in the Pinia store, `meta.requiresEditor` + one global guard |
 | D2 Deployable build | Done: builds on Windows/macOS/Linux, `npm run serve`, SPA fallback documented in `frontend/README.md` |
-| S1, B1, B2, D1 (backend) | Sprint 3. The frontend already accepts the planned `{ error }` and `{ message }` reply shapes. |
+| Extra components | `SearchBar`, `NavBar` (responsive), `ConfirmDialog`, `TableSkeleton`, `StatePanel` |
+| D1 database init | Done early: `npm run db:init` in `backend/` |
+| S1, B1, B2 (backend) | Sprint 3. The frontend already accepts the planned `{ error }` and `{ message }` reply shapes. |
 
 Details for the frontend are in [`frontend/README.md`](frontend/README.md).
-

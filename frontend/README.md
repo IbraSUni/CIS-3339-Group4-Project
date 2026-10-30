@@ -32,11 +32,21 @@ npm install        # install dependencies
 npm run dev        # development server with hot reload (http://localhost:5173)
 npm run build      # production build into dist/
 npm run serve      # serve the production build locally (http://localhost:4173)
+npm test           # unit tests (Vitest)
 ```
 
 `npm run preview` is an alias of `npm run serve`.
 
+## Tests
+
+`npm test` runs the Vitest suite in `tests/` (jsdom, Vue Test Utils): `useApi`, the
+Axios interceptor, `DataTable` sorting and paging, session restore and logout, the
+route guard, and the confirm dialog. No backend or database is needed.
+
 ## Demo accounts
+
+Created by `npm run db:init` in `backend/`.
+
 
 | Role | Username | Password |
 | --- | --- | --- |
@@ -53,13 +63,24 @@ delete, and register clients for events. A viewer who types an editor-only URL
 src/
   api/api.js              Axios client + the single response interceptor
   composables/useApi.js   { data, loading, error, execute } for API calls
-  components/DataTable.vue  sortable, paginated table used by the three list views
-  components/barChart.vue, donutZipChart.vue  dashboard charts
+  components/DataTable.vue      sortable, paginated table used by the three list views
+  components/SearchBar.vue      search panel shared by the three list views
+  components/NavBar.vue         sidebar on desktop, menu drawer on phones
+  components/ConfirmDialog.vue  app-wide confirm dialog (open it with useConfirm())
+  components/TableSkeleton.vue, StatePanel.vue  loading, empty and error states
+  components/barChart.vue, donutZipChart.vue    dashboard charts
+  composables/useConfirm.js     promise-based confirm, replaces window.confirm()
   router/index.js         routes + one global guard (requiresAuth, requiresEditor)
   store/loggedInUser.js   Pinia setup store: session, role, restore on refresh
   utils/formatDate.js     shared date formatting
+  index.css               design tokens and shared classes (buttons, cards, forms)
   views/                  pages
+tests/                    Vitest unit tests
 ```
+
+Styling: Tailwind with one accent color (UH red, `brand-*` in `tailwind.config.js`) and
+shared classes in `src/index.css` (`btn`, `card`, `form-control`, ...). Icons come from the
+`material-icons` npm package, so nothing is loaded from Google Fonts.
 
 ### Error handling (task F2)
 
