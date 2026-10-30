@@ -18,6 +18,12 @@ export default defineConfig({
     __VUE_PROD_DEVTOOLS__: false,
     __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false
   },
+  // Vitest (npm test): component tests run in a simulated browser (jsdom).
+  test: {
+    environment: 'jsdom',
+    include: ['tests/**/*.spec.js'],
+    restoreMocks: true
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
