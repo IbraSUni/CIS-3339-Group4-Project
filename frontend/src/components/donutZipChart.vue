@@ -1,7 +1,7 @@
 <!-- Doughnut chart of clients per ZIP code, used on the dashboard. -->
 <template>
-  <div class="w-1/2">
-    <canvas class="p-10" ref="canvasRef" role="img" aria-label="Clients by ZIP code"></canvas>
+  <div class="mx-auto w-full max-w-xs">
+    <canvas ref="canvasRef" role="img" aria-label="Clients by ZIP code"></canvas>
   </div>
 </template>
 
@@ -20,6 +20,11 @@ import { Chart, registerables } from 'chart.js'
 
 Chart.register(...registerables)
 
+// One hue (the brand red) in several strengths, so the chart stays on-palette
+// however many ZIP codes there are.
+const palette = ['#c8102e', '#dc3a50', '#ec9aa5', '#a80d26', '#f6c7cd', '#8a0b20', '#5c0715', '#fbe3e6']
+const colorsFor = (count) => Array.from({ length: count }, (_, i) => palette[i % palette.length])
+
 const props = defineProps({
   label: { type: Array, default: () => [] },
   chartData: { type: Array, default: () => [] }
@@ -33,12 +38,12 @@ onMounted(() => {
     type: 'doughnut',
     data: {
       labels: [...props.label],
-      datasets: [{ borderWidth: 1, data: [...props.chartData] }]
+      datasets: [{ data: [...props.chartData], backgroundColor: colorsFor(props.chartData.length), borderColor: '#ffffff', borderWidth: 2 }]
     },
     options: {
       plugins: {
-        legend: { display: false },
-        title: { display: true, text: 'Clients by Zip Code' }
+        legend: { display: true, position: 'bottom', labels: { boxWidth: 12 } },
+        title: { display: false }
       },
       responsive: true,
       maintainAspectRatio: true
@@ -52,6 +57,7 @@ watch(
     if (!chart) return
     chart.data.labels = [...labels]
     chart.data.datasets[0].data = [...values]
+    chart.data.datasets[0].backgroundColor = colorsFor(values.length)
     chart.update()
   },
   { deep: true }

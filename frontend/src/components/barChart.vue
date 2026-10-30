@@ -1,7 +1,7 @@
 <!-- Bar chart of attendance per event, used on the dashboard. -->
 <template>
   <div>
-    <canvas class="p-10" ref="canvasRef" role="img" aria-label="Attendance per event"></canvas>
+    <canvas ref="canvasRef" role="img" aria-label="Attendance per event"></canvas>
   </div>
 </template>
 
@@ -38,16 +38,17 @@ onMounted(() => {
     type: 'bar',
     data: {
       labels: [...props.label],
-      datasets: [{ borderWidth: 1, data: [...props.chartData] }]
+      datasets: [{ data: [...props.chartData], backgroundColor: 'rgba(200, 16, 46, 0.8)', hoverBackgroundColor: '#a80d26', borderRadius: 4, maxBarThickness: 48 }]
     },
     options: {
       scales: {
         y: { beginAtZero: true, ticks: { stepSize: 1 } },
-        x: { grid: { display: false } }
+        x: { grid: { display: false }, ticks: { autoSkip: true, maxRotation: 45 } }
       },
       plugins: {
         legend: { display: false },
-        title: { display: true, text: 'Attendance Chart' }
+        // The section heading on the dashboard already names the chart.
+        title: { display: false }
       },
       responsive: true,
       maintainAspectRatio: true
